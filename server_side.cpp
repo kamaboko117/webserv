@@ -1,16 +1,16 @@
 #include <stdio.h>
+#include <iostream>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <cstdlib>
 #include <netinet/in.h>
 #include <string.h>
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-
 
 #define PORT 	8080
 #define IPv6	AF_INET6
@@ -30,33 +30,21 @@ int main(int argc, char const *argv[])
 	int addrlen = sizeof(address);
 
 	// Only this line has been changed. Everything is same.
-	std::string toto;
-
-	toto.append("HTTP/1.1 200 OK\n");
-	toto.append("Content-type: text/html\n");
-	toto.append("Content-Length: 2048\n\n");
-	int fd_test_html = open("home/test.html", O_RDWR);
-	char buffer;
-	while (read(fd_test_html, &buffer, 1))
-		toto.append(&buffer);
-	//toto.append("Hello Dave!\n");
-	toto.append("\n");
 
 	https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 
 	//char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
 
 	// Creating socket file descriptor
-	if ((server_fd = socket(IPv4, SOCK_STREAM, getprotobyname("tcp")->p_proto)) == 0)
+	if ((server_fd = socket(IPv4, SOCK_STREAM, getprotobyname("tcp")->p_proto)) == -1)
 	{
 		perror("In socket");
 		exit(EXIT_FAILURE);
 	}
 
-
 	address.sin_family = IPv4;
+	address.sin_port = htons(PORT);
 	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons( PORT );
 
 	memset(address.sin_zero, '\0', sizeof address.sin_zero);
 
@@ -75,6 +63,33 @@ int main(int argc, char const *argv[])
 		perror("In listen");
 		exit(EXIT_FAILURE);
 	}
+
+	int fd_test_html;
+	std::string toto;
+	std::string	file_content;
+	// Responde from the server (alowd / not alowd, Not exist, etc...)
+	toto.append("HTTP/1.1 200 OK\n");
+
+	// The type of the file requested
+	toto.append("Content-type: text/html\n\n");
+
+	// Open and read the content store it in a string
+	fd_test_html = open("home/test.html", O_RDWR);
+	char buffer;
+	while (read(fd_test_html, &buffer, 1))
+		file_content.append(&buffer, 1);
+	close(fd_test_html);
+	fd_test_html = open("home/test.html", O_RDWR);
+	if (fd_test_html < 0)
+	{
+		perror("open");
+		exit(-1);
+	}
+	toto.append("Content-Length: ");
+	char *titi = itoa(file_content.size(), 10);
+	toto.append(std::string(titi));
+	toto.append("\n\n");
+
 	while(1)
 	{
 		printf("\n+++++++ Waiting for new connection ++++++++\n\n");
