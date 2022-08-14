@@ -23,6 +23,49 @@ void	ft_string_to_char(std::string s, char *c) {
 	strcpy(c, s.c_str());
 }
 
+int	pars(const char *str) {
+	int i = 5;
+	//printf("str[i] = %c\n", str[i]);
+	if (str[i] == 'f')
+		return (-1);
+	if (str[i] == '1')
+		return (1);
+	if (str[i] == '2')
+		return (2);
+	return (0);
+}
+
+void	send_to_socket(int socket, const char *str) {
+	write(socket, str, strlen(str));
+}
+
+void	open_file(const char *file, int socket) {
+	int fd = open(file, O_RDWR);
+	std::string file_content;
+	file_content.append("HTTP/1.1 200 OK\n");
+	file_content.append("Content-type: text/html\n\n");
+	//file_content.append("Content-Length: 1024\n\n");
+	char buffer;
+	while (read(fd, &buffer, 1)) {
+		file_content.append(&buffer, 1);
+	}
+	send_to_socket(socket, file_content.c_str());
+}
+
+void	send_page(int i, int socket) {
+	switch (i) {
+		case 1:
+			open_file("home/file1.html", socket);
+			break;
+		case 2:
+			open_file("home/file2.html", socket);
+			break;
+		case 0:
+			open_file("home/test.html", socket);
+			break;
+	}
+}
+
 int main(int argc, char const *argv[])
 {
 	int server_fd, new_socket; long valread;
@@ -32,8 +75,6 @@ int main(int argc, char const *argv[])
 	// Only this line has been changed. Everything is same.
 
 	https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-
-	//char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
 
 	// Creating socket file descriptor
 	if ((server_fd = socket(IPv4, SOCK_STREAM, getprotobyname("tcp")->p_proto)) == -1)
@@ -71,7 +112,8 @@ int main(int argc, char const *argv[])
 	toto.append("HTTP/1.1 200 OK\n");
 
 	// The type of the file requested
-	toto.append("Content-type: text/html\n\n");
+	toto.append("Content-type: text/html\n");
+	toto.append("Content-Length: 1024\n\n");
 
 	// Open and read the content store it in a string
 	fd_test_html = open("home/test.html", O_RDWR);
@@ -79,15 +121,17 @@ int main(int argc, char const *argv[])
 	while (read(fd_test_html, &buffer, 1))
 		file_content.append(&buffer, 1);
 	close(fd_test_html);
+	toto.append(file_content);
+	/*
 	fd_test_html = open("home/test.html", O_RDWR);
 	if (fd_test_html < 0)
 	{
 		perror("open");
 		exit(-1);
 	}
-	toto.append("Content-Length: ");
-	char *titi = itoa(file_content.size(), 10);
-	toto.append(std::string(titi));
+	*/
+	//char *titi = itoa(file_content.size(), 10);
+	//toto.append(std::string(titi));
 	toto.append("\n\n");
 
 	while(1)
@@ -102,8 +146,9 @@ int main(int argc, char const *argv[])
 		char buffer[30000] = {0};
 		valread = read( new_socket , buffer, 30000);
 		printf("%s\n",buffer );
-		write(new_socket , toto.c_str() , strlen(toto.c_str()));
-		printf("------------------toto message sent-------------------");
+		send_page(pars(buffer), new_socket);
+		//write(new_socket , toto.c_str() , strlen(toto.c_str()));
+		printf("------------------toto message sent-------------------\n");
 		// Close the socket / the filedescriptor
 		close(new_socket);
 	}
