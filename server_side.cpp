@@ -32,6 +32,8 @@ int	pars(const char *str) {
 		return (1);
 	if (str[i] == '2')
 		return (2);
+	if (str[i] == '3')
+		return (3);
 	return (0);
 }
 
@@ -62,6 +64,9 @@ void	send_page(int i, int socket) {
 			break;
 		case 0:
 			open_file("home/test.html", socket);
+			break;
+		case 3:
+			open_file("home/form.html", socket);
 			break;
 	}
 }
