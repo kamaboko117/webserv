@@ -10,6 +10,7 @@
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 #define PORT 	8080
@@ -37,21 +38,39 @@ int	pars(const char *str) {
 	return (0);
 }
 
-void	send_to_socket(int socket, const char *str) {
-	write(socket, str, strlen(str));
-}
-
 void	open_file(const char *file, int socket) {
-	int fd = open(file, O_RDWR);
 	std::string file_content;
+
+	/* Réponse du serveur au client */
 	file_content.append("HTTP/1.1 200 OK\n");
-	file_content.append("Content-type: text/html\n\n");
+
+	/* Type de document renvoyé au navigateur */
+	file_content.append("Content-type: text/html\n");
+
+	/* Cookie que le navigateur va stocker */
+
+	/* Bonus Cookie (session)
+	 * Idée d'exemple serai un simple bouton [conect] et/ou [disconect]
+	 * (sur une page dédié)
+	 * Cela mettra a jour les pages et diras en bas s'il est connecté (ou non)
+	 */
+	file_content.append("Set-Cookie: toto=titi\n\n");
+
+	/* Longueur du fichier LUS par le client
+	 * (Le contenu peut être plus grand que la taille donné)
+	 * Cela est uniquement la taille que renvoie le CGI
+	 * (sans compte l'en tête HTTP)
+	 */
 	//file_content.append("Content-Length: 1024\n\n");
+
+	int fd = open(file, O_RDWR);
 	char buffer;
 	while (read(fd, &buffer, 1)) {
 		file_content.append(&buffer, 1);
 	}
-	send_to_socket(socket, file_content.c_str());
+
+	/* Depending of the background, different flag should be maid*/
+	send(socket, file_content.c_str(), file_content.size(), MSG_CONFIRM);
 }
 
 void	send_page(int i, int socket) {
@@ -76,6 +95,7 @@ int main(int argc, char const *argv[])
 	int server_fd, new_socket; long valread;
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
+	int	opt = 1;
 
 	// Only this line has been changed. Everything is same.
 
@@ -94,6 +114,12 @@ int main(int argc, char const *argv[])
 
 	memset(address.sin_zero, '\0', sizeof address.sin_zero);
 
+    if (setsockopt(server_fd, SOL_SOCKET,
+		SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+	{
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
 
 	// Indentify a socket
 	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)))
