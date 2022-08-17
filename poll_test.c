@@ -8,13 +8,13 @@
 
 int main(int ac, char **av) {
 	/*general value*/
-	int	fd = 0;
-	char buff[11];
-	int ret = 0;
+	int		fd = 0;
+	char	buff[11];
+	int		ret = 0;
 
 	/*poll argument*/
 	struct pollfd	fds[1];
-	int				pret;
+	int				p_ret;
 	int				timeout = 5000;
 
 
@@ -25,14 +25,14 @@ int main(int ac, char **av) {
 		fds[0].events |= POLLIN;
 
 
-		pret = poll(fds, 1, timeout);
+		p_ret = poll(fds, 1, timeout);
 
-		if (pret == -1) {
+		if (p_ret == -1) {
 			perror("poll");
 			exit(EXIT_FAILURE);
 		}
 
-		if (pret == 0) {
+		if (p_ret == 0) {
 			printf("ret = %d\n", ret);
 			printf("\ttimeout\n");
 		} else {
@@ -42,7 +42,7 @@ int main(int ac, char **av) {
 			printf("ret = %d\n", ret);
 
 			if (ret != -1) {
-				printf("  buff = %s\n", buff);
+				printf("  buff = [%s]\n", buff);
 			}
 		}
 

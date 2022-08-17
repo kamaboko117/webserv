@@ -63,7 +63,7 @@ void	send_page(int i, int socket) {
 			open_file("home/file2.html", socket);
 			break;
 		case 0:
-			open_file("home/test.html", socket);
+			open_file("home/default.html", socket);
 			break;
 		case 3:
 			open_file("home/form.html", socket);
@@ -121,7 +121,7 @@ int main(int argc, char const *argv[])
 	toto.append("Content-Length: 1024\n\n");
 
 	// Open and read the content store it in a string
-	fd_test_html = open("home/test.html", O_RDWR);
+	fd_test_html = open("home/default.html", O_RDWR);
 	char buffer;
 	while (read(fd_test_html, &buffer, 1))
 		file_content.append(&buffer, 1);
