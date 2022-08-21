@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <cstring>
 
 #define PORT 	8080
 #define IPv6	AF_INET6
@@ -22,6 +24,29 @@
 void	ft_string_to_char(std::string s, char *c) {
 	c = (char *)calloc(s.size() + 1, sizeof(char));
 	strcpy(c, s.c_str());
+}
+
+void	list_dir(int socket) {
+	DIR				*dir;
+	struct dirent	*dp;
+	char			*name;
+	std::string		str;
+
+	str.append("HTTP/1.1 200 OK\n");
+	str.append("Content-type: text/html\n\n");
+
+	dir = opendir("./home");
+	str.append("<!DOCTYPE>\n<html>\n<body>\n<ul>");
+	while (dp = readdir(dir)) {
+		name = dp->d_name;
+		str.append("<li><a href=\"");
+		str.append(name, strlen(name));
+		str.append("\">");
+		str.append(name, strlen(name));
+		str.append("</a></li>\n");
+	}
+	str.append("</ul>\n</body>\n</html>\n");
+	send(socket, str.c_str(), str.size(), MSG_CONFIRM);
 }
 
 int	pars(const char *str) {
@@ -35,6 +60,8 @@ int	pars(const char *str) {
 		return (2);
 	if (str[i] == '3')
 		return (3);
+	if (str[i] == '4')
+		return (4);
 	return (0);
 }
 
@@ -70,7 +97,8 @@ void	open_file(const char *file, int socket) {
 	}
 
 	/* Depending of the background, different flag should be maid*/
-	send(socket, file_content.c_str(), file_content.size(), MSG_CONFIRM);
+	//send(socket, file_content.c_str(), file_content.size(), MSG_CONFIRM);
+	write(socket, file_content.c_str(), file_content.size());
 }
 
 void	send_page(int i, int socket) {
@@ -86,6 +114,9 @@ void	send_page(int i, int socket) {
 			break;
 		case 3:
 			open_file("home/form.html", socket);
+			break;
+		case 4:
+			list_dir(socket);
 			break;
 	}
 }
