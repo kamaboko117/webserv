@@ -4,10 +4,37 @@
 #include <cstring>
 #include <netdb.h>
 #include <unistd.h>
+#include <vector>
 
+typedef struct	ft_server {
+	int	def; // 0 or 1 is it the default server or not
+	std::string	host;
+	int	port;
+	std::string	server_name;
 
+}				t_server;
+
+std::vector<t_server> list_server;
 
 int main(int ac, char **av) {
+
+	t_server ser1;
+	t_server ser2;
+
+	ser1.def = 1;
+	ser1.host.append("test_host1");
+	ser1.port = 5050;
+	ser1.server_name.append("test_name1");
+
+	ser2.def = 0;
+	ser2.host.append("test_host2");
+	ser2.port = 6060;
+	ser2.server_name.append("test_name2");
+
+	list_server.push_back(ser1);
+	list_server.push_back(ser2);
+
+
 	int					server_fd;
 	int					new_socket;
 	long				valread;
