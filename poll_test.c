@@ -15,7 +15,7 @@ int main(int ac, char **av) {
 	/*poll argument*/
 	struct pollfd	fds[1];
 	int				p_ret;
-	int				timeout = 5000;
+	int				timeout = -1;
 
 
 	while (1) {

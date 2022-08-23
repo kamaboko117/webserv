@@ -5,18 +5,60 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <vector>
+#include <poll.h>
 
 typedef struct	ft_server {
 	int	def; // 0 or 1 is it the default server or not
 	std::string	host;
 	int	port;
+	int	server_fd;
+	struct sockaddr_in address;
+	int		addrlen = sizeof(address);
+	int	opt = 1;
 	std::string	server_name;
+	long	valread;
 
 }				t_server;
 
 std::vector<t_server> list_server;
 
+void	create_server(t_server &s) {
+	s.server_fd = socket(AF_INET, SOCK_STREAM, getprotobyname("tcp")->p_proto);
+	if (s.server_fd == -1) {
+		perror("socket");
+		exit(EXIT_FAILURE);
+	}
+
+	s.address.sin_family = AF_INET;
+	s.address.sin_port = htons(s.port);
+	s.address.sin_addr.s_addr = INADDR_ANY;
+
+	memset(s.address.sin_zero, 0, sizeof(s.address.sin_zero));
+
+	if (setsockopt(s.server_fd, SOL_SOCKET,
+		SO_REUSEADDR | SO_REUSEPORT, &s.opt, sizeof(s.opt))) {
+		perror("setsocket");
+		exit(EXIT_FAILURE);
+	}
+
+	if (bind(s.server_fd, (struct sockaddr *)&s.address, sizeof(s.address))) {
+		perror("bind");
+		close(s.server_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	if (listen(s.server_fd, 42)) {
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+
+}
+
 int main(int ac, char **av) {
+
+	struct pollfd	fds[2];
+	int	p_ret;
+	int	timeout = -1;
 
 	t_server ser1;
 	t_server ser2;
@@ -34,9 +76,21 @@ int main(int ac, char **av) {
 	list_server.push_back(ser1);
 	list_server.push_back(ser2);
 
+	create_server(ser1);
+	create_server(ser2);
 
-	int					server_fd;
+	fds[0].fd = ser1.port;
+	fds[0].events = 0;
+	fds[0].events |= POLLIN;
+
+	fds[1].fd = ser2.port;
+	fds[1].events = 0;
+	fds[1].events |= POLLIN;
+
 	int					new_socket;
+
+/*
+	int					server_fd;
 	long				valread;
 	struct	sockaddr_in	address;
 	int					addrlen = sizeof(address);
@@ -71,19 +125,34 @@ int main(int ac, char **av) {
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
+	*/
+
+
 
 	while (1) {
 		printf("\n+++++++ Waiting for new connection ++++++++\n\n");
 
-		if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-			(socklen_t *)&addrlen)) == -1) {
+		p_ret = poll(fds, 2, -1);
+
+		printf("ser1.server_fd = %d\n", ser1.server_fd);
+		printf("ser2.server_fd = %d\n", ser2.server_fd);
+		printf("p_ret = %d\n\n", p_ret);
+
+		if (p_ret == -1) {
+			perror("poll");
+			exit(EXIT_FAILURE);
+		}
+
+		if (fds[0].events | POLLIN)
+		if ((new_socket = accept(ser2.server_fd, (struct sockaddr *)&ser1.address,
+			(socklen_t *)&ser1.addrlen)) == -1) {
 			perror("accept");
-			close(server_fd);
+			close(ser2.server_fd);
 			exit(EXIT_FAILURE);
 		}
 
 		char	buffer[30000] = {0};
-		valread = read(new_socket, buffer, 30000);
+		ser1.valread = read(new_socket, buffer, 30000);
 		printf("%s\n", buffer);
 
 		std::string	mssg("Coucou !\n");
