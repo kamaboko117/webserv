@@ -4,8 +4,25 @@
 #include <cstring>
 #include <netdb.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <vector>
 #include <poll.h>
+
+void	display_flag_poll(void) {
+	printf("test for all flag:\n");
+	printf("POLLIN = %u\n", POLLIN);
+	printf("POLLPRI = %u\n", POLLPRI);
+	printf("POLLOUT = %u\n", POLLOUT);
+	printf("POLLERR = %u\n", POLLERR);
+	printf("POLLHUP = %u\n", POLLHUP);
+	printf("POLLNVAL = %u\n", POLLNVAL);
+	printf("POLLRDNORM = %u\n", POLLRDNORM);
+	printf("POLLRDBAND = %u\n", POLLRDBAND);
+	printf("POLLWRNORM = %u\n", POLLWRNORM);
+	printf("POLLWRBAND = %u\n", POLLWRBAND);
+	printf("POLLRDHUP = %u\n", POLLRDHUP);
+}
+
 
 typedef struct	ft_server {
 	int	def; // 0 or 1 is it the default server or not
@@ -17,6 +34,7 @@ typedef struct	ft_server {
 	int	opt = 1;
 	std::string	server_name;
 	long	valread;
+	int		rc;
 
 }				t_server;
 
@@ -38,7 +56,14 @@ void	create_server(t_server &s) {
 	if (setsockopt(s.server_fd, SOL_SOCKET,
 		SO_REUSEADDR | SO_REUSEPORT, &s.opt, sizeof(s.opt))) {
 		perror("setsocket");
+		close(s.server_fd);
 		exit(EXIT_FAILURE);
+	}
+
+	if (ioctl(s.server_fd, FIONBIO, (char *)&opt) == -1) {
+		perror("ioctl() failed");
+		close(s.server_fd);
+		exit(-1);
 	}
 
 	if (bind(s.server_fd, (struct sockaddr *)&s.address, sizeof(s.address))) {
@@ -49,6 +74,7 @@ void	create_server(t_server &s) {
 
 	if (listen(s.server_fd, 42)) {
 		perror("listen");
+		close(s.server_fd);
 		exit(EXIT_FAILURE);
 	}
 
@@ -57,8 +83,11 @@ void	create_server(t_server &s) {
 int main(int ac, char **av) {
 
 	struct pollfd	fds[2];
-	int	p_ret;
-	int	timeout = -1;
+	int				p_ret;
+	int				timeout = 3000;
+	int				new_socket;
+
+	memset(fds, 0, sizeof(fds));
 
 	t_server ser1;
 	t_server ser2;
@@ -81,74 +110,30 @@ int main(int ac, char **av) {
 	list_server.push_back(ser1);
 	list_server.push_back(ser2);
 
+	std::cout << "list_server.size() = " << list_server.size() << std::endl;
+
+
 	/* fds for poll */
 	fds[0].fd = ser1.port;
-	fds[0].events = 0;
-	fds[0].events |= POLLIN;
+	fds[0].events = POLLIN;
 
 	fds[1].fd = ser2.port;
-	fds[1].events = 0;
-	fds[1].events |= POLLIN;
-
-	int					new_socket;
-
-/*
-	int					server_fd;
-	long				valread;
-	struct	sockaddr_in	address;
-	int					addrlen = sizeof(address);
-	int					opt = 1;
-	int					port = 8080;
-
-	server_fd = socket(AF_INET, SOCK_STREAM, getprotobyname("tcp")->p_proto);
-	if (server_fd == -1) {
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
-
-	address.sin_family = AF_INET;
-	address.sin_port = htons(8080);
-	address.sin_addr.s_addr = INADDR_ANY;
-
-	memset(address.sin_zero, 0, sizeof(address.sin_zero));
-
-	if (setsockopt(server_fd, SOL_SOCKET,
-		SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-		perror("setsocket");
-		exit(EXIT_FAILURE);
-	}
-
-	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))) {
-		perror("bind");
-		close(server_fd);
-		exit(EXIT_FAILURE);
-	}
-
-	if (listen(server_fd, 1)) {
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
-	*/
-
-
+	fds[1].events = POLLIN;
 
 	while (1) {
 		printf("\n+++++++ Waiting for new connection ++++++++\n\n");
 
-		p_ret = poll(fds, 2, -1);
-
-		printf("ser1.server_fd = %d\n", ser1.server_fd);
-		printf("ser2.server_fd = %d\n", ser2.server_fd);
-		printf("p_ret = %d\n\n", p_ret);
+		p_ret = poll(fds, 2, 5000);
 
 		if (p_ret == -1) {
 			perror("poll");
 			exit(EXIT_FAILURE);
+		} else if (p_ret == 0){
+			printf("timeout\n");
 		}
 
-		if (fds[0].events | POLLIN)
-		if ((new_socket = accept(ser2.server_fd, (struct sockaddr *)&ser1.address,
-			(socklen_t *)&ser1.addrlen)) == -1) {
+		if ((new_socket = accept(ser1.server_fd, (struct sockaddr *)&ser1.address,
+						(socklen_t *)&ser1.addrlen)) == -1) {
 			perror("accept");
 			close(ser2.server_fd);
 			exit(EXIT_FAILURE);
@@ -161,7 +146,6 @@ int main(int ac, char **av) {
 		std::string	mssg("Coucou !\n");
 		send(new_socket, mssg.c_str(), mssg.size(), MSG_CONFIRM);
 		close(new_socket);
-
 		printf("-------- Message send--------\n");
 	}
 
