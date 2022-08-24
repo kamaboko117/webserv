@@ -73,12 +73,15 @@ int main(int ac, char **av) {
 	ser2.port = 6060;
 	ser2.server_name.append("test_name2");
 
-	list_server.push_back(ser1);
-	list_server.push_back(ser2);
-
+	/* Create server */
 	create_server(ser1);
 	create_server(ser2);
 
+	/* server list updated */
+	list_server.push_back(ser1);
+	list_server.push_back(ser2);
+
+	/* fds for poll */
 	fds[0].fd = ser1.port;
 	fds[0].events = 0;
 	fds[0].events |= POLLIN;
