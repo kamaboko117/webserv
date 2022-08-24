@@ -1,3 +1,4 @@
+#include <netdb.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -20,7 +21,7 @@ int	main (int argc, char *argv[])
 	int    listen_sd = -1, new_sd = -1;
 	int    desc_ready, end_server = FALSE, compress_array = FALSE;
 	int    close_conn;
-	char   buffer[80];
+	char   buffer[1024];
 	struct sockaddr_in6   addr;
 	int    timeout;
 	struct pollfd fds[200];
@@ -30,7 +31,7 @@ int	main (int argc, char *argv[])
 	/* Create an AF_INET6 stream socket to receive incoming      */
 	/* connections on                                            */
 	/*************************************************************/
-	listen_sd = socket(AF_INET6, SOCK_STREAM, 0);
+	listen_sd = socket(AF_INET6, SOCK_STREAM, getprotobyname("tcp")->p_proto);
 	if (listen_sd < 0)
 	{
 		perror("socket() failed");
@@ -69,8 +70,7 @@ int	main (int argc, char *argv[])
 	addr.sin6_family      = AF_INET6;
 	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
 	addr.sin6_port        = htons(SERVER_PORT);
-	rc = bind(listen_sd,
-			(struct sockaddr *)&addr, sizeof(addr));
+	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
 	if (rc < 0)
 	{
 		perror("bind() failed");
@@ -104,7 +104,7 @@ int	main (int argc, char *argv[])
 	/* activity after 3 minutes this program will end.           */
 	/* timeout value is based on milliseconds.                   */
 	/*************************************************************/
-	timeout = (7 * 1000);
+	timeout = (3 * 60 * 1000);
 
 	/*************************************************************/
 	/* Loop waiting for incoming connects or for incoming data   */
@@ -115,14 +115,13 @@ int	main (int argc, char *argv[])
 		/***********************************************************/
 		/* Call poll() and wait 3 minutes for it to complete.      */
 		/***********************************************************/
-		printf("Waiting on poll()...\n");
+		printf("Waiting on poll()... on port: %d\n", SERVER_PORT);
 		rc = poll(fds, nfds, timeout);
 
 		/**********************************************************/
 		/* Check to see if the poll call failed.                   */
 		/***********************************************************/
-		if (rc < 0)
-		{
+		if (rc < 0) {
 			perror("  poll() failed");
 			break;
 		}
@@ -130,8 +129,7 @@ int	main (int argc, char *argv[])
 		/***********************************************************/
 		/* Check to see if the 3 minute time out expired.          */
 		/***********************************************************/
-		if (rc == 0)
-		{
+		if (rc == 0) {
 			printf("  poll() timed out.  End program.\n");
 			break;
 		}
@@ -156,15 +154,13 @@ int	main (int argc, char *argv[])
 			/* If revents is not POLLIN, it's an unexpected result,  */
 			/* log and end the server.                               */
 			/*********************************************************/
-			if(fds[i].revents != POLLIN)
-			{
+			if(fds[i].revents != POLLIN) {
 				printf("  Error! revents = %d\n", fds[i].revents);
 				end_server = TRUE;
 				break;
 
 			}
-			if (fds[i].fd == listen_sd)
-			{
+			if (fds[i].fd == listen_sd) {
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
 				/*******************************************************/
@@ -185,10 +181,8 @@ int	main (int argc, char *argv[])
 					/* server.                                           */
 					/*****************************************************/
 					new_sd = accept(listen_sd, NULL, NULL);
-					if (new_sd < 0)
-					{
-						if (errno != EWOULDBLOCK)
-						{
+					if (new_sd < 0) {
+						if (errno != EWOULDBLOCK) {
 							perror("  accept() failed");
 							end_server = TRUE;
 						}
@@ -234,10 +228,8 @@ int	main (int argc, char *argv[])
 					/* connection.                                       */
 					/*****************************************************/
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-					if (rc < 0)
-					{
-						if (errno != EWOULDBLOCK)
-						{
+					if (rc < 0) {
+						if (errno != EWOULDBLOCK) {
 							perror("  recv() failed");
 							close_conn = TRUE;
 						}
