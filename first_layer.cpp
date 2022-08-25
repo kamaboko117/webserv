@@ -1,3 +1,4 @@
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <iostream>
@@ -60,11 +61,13 @@ void	create_server(t_server &s) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (ioctl(s.server_fd, FIONBIO, (char *)&opt) == -1) {
+	/*
+	if (ioctl(s.server_fd, FIONBIO, (char *)&s.opt) == -1) {
 		perror("ioctl() failed");
 		close(s.server_fd);
 		exit(-1);
 	}
+	*/
 
 	if (bind(s.server_fd, (struct sockaddr *)&s.address, sizeof(s.address))) {
 		perror("bind");
@@ -135,7 +138,7 @@ int main(int ac, char **av) {
 		if ((new_socket = accept(ser1.server_fd, (struct sockaddr *)&ser1.address,
 						(socklen_t *)&ser1.addrlen)) == -1) {
 			perror("accept");
-			close(ser2.server_fd);
+			close(ser1.server_fd);
 			exit(EXIT_FAILURE);
 		}
 
