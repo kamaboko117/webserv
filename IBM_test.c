@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 
-#define SERVER_PORT  12345
+#define SERVER_PORT  8080
 
 #define TRUE             1
 #define FALSE            0
@@ -228,9 +228,7 @@ int	main (int argc, char *argv[])
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
-					printf("Avant recv\n");
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-					printf("Apres recv, rc = %d\n", rc);
 					if (rc < 0) {
 						if (errno != EWOULDBLOCK) {
 							perror("  recv() failed");
@@ -260,17 +258,13 @@ int	main (int argc, char *argv[])
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					//rc = send(fds[i].fd, buffer, len, 0);
-					printf("Avant send\n");
-					char	*str = "HTTP/1.1 200 OK\nContent-type: text/html\n\nCoucou !\n";
-					rc = send(fds[i].fd, str, strlen(str), 0);
+					rc = send(fds[i].fd, buffer, len, 0);
 					if (rc < 0)
 					{
 						perror("  send() failed");
 						close_conn = TRUE;
 						break;
 					}
-					printf("Apres send\n");
 
 				} while(--flag);
 				close(fds[i].fd);
