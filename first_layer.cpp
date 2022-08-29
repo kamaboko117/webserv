@@ -31,7 +31,7 @@ typedef struct	ft_server {
 	int	port;
 	int	server_fd;
 	struct sockaddr_in address;
-	int		addrlen = sizeof(address);
+int		addrlen = sizeof(address);
 	int	opt = 1;
 	std::string	server_name;
 	long	valread;

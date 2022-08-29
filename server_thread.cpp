@@ -1,3 +1,4 @@
+#include <string>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -10,15 +11,73 @@
 #include <errno.h>
 
 #define SERVER_PORT1  12345
-#define SERVER_PORT2  8080
 
 #define TRUE             1
 #define FALSE            0
 
+typedef struct s_server {
+	int	port;
+	int	err;
+	int	socket;
+	int	new_socket;
+	struct sockaddr_in6	addr;
+	char	buffer[4096];
+	int		opt = 1;
+}				t_server;
+
+void	create_server(t_server &server, int port) {
+
+	server.socket = socket(AF_INET6, SOCK_STREAM, 0);
+	if (server.socket < 0)
+	{
+		perror("socket() failed");
+		exit(-1);
+	}
+
+	err = setsockopt(server.socket, SOL_SOCKET,  SO_REUSEADDR,
+			(char *)&server.opt, sizeof(server.opt));
+	if (rc < 0)
+	{
+		perror("setsockopt() failed");
+		close(server.socket);
+		exit(-1);
+	}
+
+	rc = ioctl(server.socket, FIONBIO, (char *)&on);
+	if (rc < 0)
+	{
+		perror("ioctl() failed");
+		close(server.socket);
+		exit(-1);
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin6_family      = AF_INET6;
+	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
+	addr.sin6_port        = htons(SERVER_PORT1);
+	rc = bind(server.socket,
+			(struct sockaddr *)&addr, sizeof(addr));
+	if (rc < 0)
+	{
+		perror("bind() failed");
+		close(server.socket);
+		exit(-1);
+	}
+
+	rc = listen(server.socket, 32);
+	if (rc < 0)
+	{
+		perror("listen() failed");
+		close(server.socket);
+		exit(-1);
+	}
+
+}
+
 int main (int argc, char *argv[])
 {
 	int    content_len, rc, on = 1;
-	int    listen_sd1 = -1, new_sd = -1, listen_sd2 = -1;
+	int    listen_sd1 = -1, new_sd = -1;
 	int    desc_ready, end_server = FALSE, compress_array = FALSE;
 	int    close_conn;
 	char   buffer[65535];
@@ -28,131 +87,6 @@ int main (int argc, char *argv[])
 
 	int    nfds = 2, current_size = 0, i, j;
 
-	/*************************************************************/
-	/* Create an AF_INET6 stream socket to receive incoming      */
-	/* connections on                                            */
-	/*************************************************************/
-	listen_sd1 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (listen_sd1 < 0)
-	{
-		perror("socket() failed");
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Allow socket descriptor to be reuseable                   */
-	/*************************************************************/
-	rc = setsockopt(listen_sd1, SOL_SOCKET,  SO_REUSEADDR,
-			(char *)&on, sizeof(on));
-	if (rc < 0)
-	{
-		perror("setsockopt() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set socket to be nonblocking. All of the sockets for      */
-	/* the incoming connections will also be nonblocking since   */
-	/* they will inherit that state from the listening socket.   */
-	/*************************************************************/
-	rc = ioctl(listen_sd1, FIONBIO, (char *)&on);
-	if (rc < 0)
-	{
-		perror("ioctl() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Bind the socket                                           */
-	/*************************************************************/
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family      = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_port        = htons(SERVER_PORT1);
-	rc = bind(listen_sd1,
-			(struct sockaddr *)&addr, sizeof(addr));
-	if (rc < 0)
-	{
-		perror("bind() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set the listen back log                                   */
-	/*************************************************************/
-	rc = listen(listen_sd1, 32);
-	if (rc < 0)
-	{
-		perror("listen() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Create an AF_INET6 stream socket to receive incoming      */
-	/* connections on                                            */
-	/*************************************************************/
-	listen_sd2 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (listen_sd2 < 0)
-	{
-		perror("socket() failed");
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Allow socket descriptor to be reuseable                   */
-	/*************************************************************/
-	rc = setsockopt(listen_sd2, SOL_SOCKET,  SO_REUSEADDR,
-			(char *)&on, sizeof(on));
-	if (rc < 0)
-	{
-		perror("setsockopt() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set socket to be nonblocking. All of the sockets for      */
-	/* the incoming connections will also be nonblocking since   */
-	/* they will inherit that state from the listening socket.   */
-	/*************************************************************/
-	rc = ioctl(listen_sd2, FIONBIO, (char *)&on);
-	if (rc < 0)
-	{
-		perror("ioctl() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Bind the socket                                           */
-	/*************************************************************/
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family      = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_port        = htons(SERVER_PORT2);
-	rc = bind(listen_sd2,
-			(struct sockaddr *)&addr, sizeof(addr));
-	if (rc < 0)
-	{
-		perror("bind() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set the listen back log                                   */
-	/*************************************************************/
-	rc = listen(listen_sd2, 32);
-	if (rc < 0)
-	{
-		perror("listen() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
 
 
 	/*************************************************************/
@@ -165,10 +99,7 @@ int main (int argc, char *argv[])
 	/*************************************************************/
 	fds[0].fd = listen_sd1;
 	fds[0].events = POLLIN;
-	fds[1].fd = listen_sd2;
-	fds[1].events = POLLIN;
 
-	int	tab[2] = {listen_sd1, listen_sd2};
 	/*************************************************************/
 	/* Initialize the timeout to 3 minutes. If no                */
 	/* activity after 3 minutes this program will end.           */
@@ -178,7 +109,7 @@ int main (int argc, char *argv[])
 
 	/*************************************************************/
 	/* Loop waiting for incoming connects or for incoming data   */
-	/* on any of the connected sockets.                          */
+	/* on any of the connected socket.                          */
 	/*************************************************************/
 	do
 	{
@@ -233,7 +164,7 @@ int main (int argc, char *argv[])
 				break;
 
 			}
-			if (fds[i].fd == tab[i])
+			if (fds[i].fd == listen_sd1)
 			{
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
@@ -254,7 +185,7 @@ int main (int argc, char *argv[])
 					/* failure on accept will cause us to end the        */
 					/* server.                                           */
 					/*****************************************************/
-					new_sd = accept(tab[i], NULL, NULL);
+					new_sd = accept(listen_sd1, NULL, NULL);
 					if (new_sd < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -331,17 +262,15 @@ int main (int argc, char *argv[])
 					/* Data was received                                 */
 					/*****************************************************/
 					content_len = rc;
-					char *str1 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 12\n\nPORT: 12345\n";
-					char *str2 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 11\n\nPORT: 8080\n";
+					//char *str1 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 12\n\nPORT: 12345\n";
+					std::string toto;
+					toto.append("HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 12\n\nPORT: 12345\n");
 					printf("  %d bytes received\n", content_len);
 
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					if (tab[i] == listen_sd1)
-						rc = send(fds[i].fd, str1, strlen(str1), 0);
-					 else if (tab[i] == listen_sd2)
-						rc = send(fds[i].fd, str2, strlen(str2), 0);
+					rc = send(fds[i].fd, toto.c_str(), toto.size(), 0);
 					printf("rc = %d\n", rc);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)
@@ -399,7 +328,7 @@ int main (int argc, char *argv[])
 	} while (end_server == FALSE); /* End of serving running.    */
 
 	/*************************************************************/
-	/* Clean up all of the sockets that are open                 */
+	/* Clean up all of the socket(s) that are open                 */
 	/*************************************************************/
 	for (i = 0; i < nfds; i++)
 	{

@@ -113,16 +113,11 @@ int main(int ac, char **av) {
 
 	int				current_size;
 
-	std::vector<t_server> l_serv;
-
 	t_server s1;
 	t_server s2;
 
 	create_server(8080, s1);
 	create_server(5050, s2);
-
-	l_serv.push_back(s1);
-	l_serv.push_back(s2);
 
 	memset(fds, 0, sizeof(fds));
 
