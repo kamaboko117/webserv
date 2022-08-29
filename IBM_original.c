@@ -187,6 +187,7 @@ int main (int argc, char *argv[])
 		/***********************************************************/
 		printf("Waiting on poll()...\n");
 		rc = poll(fds, nfds, -1);
+		printf("apres poll()\n");
 
 		/***********************************************************/
 		/* Check to see if the poll call failed.                   */
@@ -233,7 +234,7 @@ int main (int argc, char *argv[])
 				break;
 
 			}
-			if (fds[i].fd == tab[i])
+			if (fds[i].fd == listen_sd1)
 			{
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
@@ -254,7 +255,7 @@ int main (int argc, char *argv[])
 					/* failure on accept will cause us to end the        */
 					/* server.                                           */
 					/*****************************************************/
-					new_sd = accept(tab[i], NULL, NULL);
+					new_sd = accept(listen_sd1, NULL, NULL);
 					if (new_sd < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -264,6 +265,7 @@ int main (int argc, char *argv[])
 						}
 						break;
 					}
+					ioctl(new_sd, FIONBIO, (char *)&on);
 
 					/*****************************************************/
 					/* Add the new incoming connection to the            */
@@ -280,6 +282,55 @@ int main (int argc, char *argv[])
 					/*****************************************************/
 				} while (new_sd != -1);
 			}
+			else if (fds[i].fd == listen_sd2)
+			{
+				/*******************************************************/
+				/* Listening descriptor is readable.                   */
+				/*******************************************************/
+				printf("  Listening socket is readable\n");
+
+				/*******************************************************/
+				/* Accept all incoming connections that are            */
+				/* queued up on the listening socket before we         */
+				/* loop back and call poll again.                      */
+				/*******************************************************/
+				do
+				{
+					/*****************************************************/
+					/* Accept each incoming connection. If               */
+					/* accept fails with EWOULDBLOCK, then we            */
+					/* have accepted all of them. Any other              */
+					/* failure on accept will cause us to end the        */
+					/* server.                                           */
+					/*****************************************************/
+					new_sd = accept(listen_sd2, NULL, NULL);
+					if (new_sd < 0)
+					{
+						if (errno != EWOULDBLOCK)
+						{
+							perror("  accept() failed");
+							end_server = TRUE;
+						}
+						break;
+					}
+					ioctl(new_sd, FIONBIO, (char *)&on);
+
+					/*****************************************************/
+					/* Add the new incoming connection to the            */
+					/* pollfd structure                                  */
+					/*****************************************************/
+					printf("  New incoming connection - %d\n", new_sd);
+					fds[nfds].fd = new_sd;
+					fds[nfds].events = POLLIN;
+					nfds++;
+
+					/*****************************************************/
+					/* Loop back up and accept another incoming          */
+					/* connection                                        */
+					/*****************************************************/
+				} while (new_sd != -1);
+			}
+
 
 			/*********************************************************/
 			/* This is not the listening socket, therefore an        */
@@ -303,16 +354,16 @@ int main (int argc, char *argv[])
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
+					printf("avant recv\n");
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+					printf("apres recv\n");
 					if (rc < 0)
 					{
-						/*
 						   if (errno != EWOULDBLOCK)
 						   {
 						   perror("  recv() failed");
 						   close_conn = TRUE;
 						   }
-						*/
 						break;
 					}
 
@@ -331,17 +382,15 @@ int main (int argc, char *argv[])
 					/* Data was received                                 */
 					/*****************************************************/
 					content_len = rc;
-					char *str1 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 12\n\nPORT: 12345\n";
-					char *str2 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 11\n\nPORT: 8080\n";
+					char *str1 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 3\n\nOK\n";
 					printf("  %d bytes received\n", content_len);
 
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					if (tab[i] == listen_sd1)
-						rc = send(fds[i].fd, str1, strlen(str1), 0);
-					 else if (tab[i] == listen_sd2)
-						rc = send(fds[i].fd, str2, strlen(str2), 0);
+					printf("avant send\n");
+					rc = send(fds[i].fd, str1, strlen(str1), 0);
+					printf("apres send\n");
 					printf("rc = %d\n", rc);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)

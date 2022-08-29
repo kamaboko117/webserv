@@ -54,9 +54,8 @@ void	create_server(t_server &server, int port) {
 	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family      = AF_INET6;
 	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_port        = htons(SERVER_PORT1);
-	rc = bind(server.socket,
-			(struct sockaddr *)&addr, sizeof(addr));
+	addr.sin6_port        = htons(port);
+	rc = bind(server.socket, (struct sockaddr *)&addr, sizeof(addr));
 	if (rc < 0)
 	{
 		perror("bind() failed");
@@ -166,9 +165,6 @@ int main (int argc, char *argv[])
 			}
 			if (fds[i].fd == listen_sd1)
 			{
-				/*******************************************************/
-				/* Listening descriptor is readable.                   */
-				/*******************************************************/
 				printf("  Listening socket is readable\n");
 
 				/*******************************************************/
@@ -196,10 +192,6 @@ int main (int argc, char *argv[])
 						break;
 					}
 
-					/*****************************************************/
-					/* Add the new incoming connection to the            */
-					/* pollfd structure                                  */
-					/*****************************************************/
 					printf("  New incoming connection - %d\n", new_sd);
 					fds[nfds].fd = new_sd;
 					fds[nfds].events = POLLIN;
