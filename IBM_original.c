@@ -26,6 +26,7 @@ typedef struct	s_server {
 
 int	create_server(t_server *s, int port) {
 	s->opt = 1;
+	s->port = port;
 
 	/* socket */
 	s->init_sock = socket(AF_INET6, SOCK_STREAM, getprotobyname("tcp")->p_proto);
@@ -77,13 +78,17 @@ int	create_server(t_server *s, int port) {
 
 }
 
-int	check_init_sock(int index, int comp, struct pollfd *fds, int len) {
-	if ((index + 1) > len)
+int	check_init_sock(int comp, t_server *list, int server_len) {
+	for (int i = 0; i < server_len; i++) {
+		if (comp == list[i].init_sock)
+			return (list[i].init_sock);
+	}
+	return (-1);
 }
 
 int main (int argc, char *argv[])
 {
-	int		server_len = 2;
+	int		server_len = 3;
 	int    content_len, rc, on = 1;
 	int    listen_sd1 = -1, new_sd = -1, listen_sd2 = -1;
 	int    desc_ready, end_server = FALSE, compress_array = FALSE;
@@ -93,139 +98,14 @@ int main (int argc, char *argv[])
 	int    timeout;
 	struct pollfd fds[200];
 
-	int    nfds = 2, current_size = 0, i, j;
+	int    nfds = server_len, current_size = 0, i, j;
 
-	t_server	list_s[2];
+	t_server	list_s[server_len];
 	memset(list_s, 0, sizeof(list_s));
 
-
-
-	/*************************************************************/
-	/* Create an AF_INET6 stream socket to receive incoming      */
-	/* connections on                                            */
-	/*************************************************************/
-	listen_sd1 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (listen_sd1 < 0)
-	{
-		perror("socket() failed");
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Allow socket descriptor to be reuseable                   */
-	/*************************************************************/
-	rc = setsockopt(listen_sd1, SOL_SOCKET,  SO_REUSEADDR,
-			(char *)&on, sizeof(on));
-	if (rc < 0)
-	{
-		perror("setsockopt() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set socket to be nonblocking. All of the sockets for      */
-	/* the incoming connections will also be nonblocking since   */
-	/* they will inherit that state from the listening socket.   */
-	/*************************************************************/
-	rc = ioctl(listen_sd1, FIONBIO, (char *)&on);
-	if (rc < 0)
-	{
-		perror("ioctl() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Bind the socket                                           */
-	/*************************************************************/
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family      = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_port        = htons(SERVER_PORT1);
-	rc = bind(listen_sd1,
-			(struct sockaddr *)&addr, sizeof(addr));
-	if (rc < 0)
-	{
-		perror("bind() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set the listen back log                                   */
-	/*************************************************************/
-	rc = listen(listen_sd1, 32);
-	if (rc < 0)
-	{
-		perror("listen() failed");
-		close(listen_sd1);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Create an AF_INET6 stream socket to receive incoming      */
-	/* connections on                                            */
-	/*************************************************************/
-	listen_sd2 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (listen_sd2 < 0)
-	{
-		perror("socket() failed");
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Allow socket descriptor to be reuseable                   */
-	/*************************************************************/
-	rc = setsockopt(listen_sd2, SOL_SOCKET,  SO_REUSEADDR,
-			(char *)&on, sizeof(on));
-	if (rc < 0)
-	{
-		perror("setsockopt() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set socket to be nonblocking. All of the sockets for      */
-	/* the incoming connections will also be nonblocking since   */
-	/* they will inherit that state from the listening socket.   */
-	/*************************************************************/
-	rc = ioctl(listen_sd2, FIONBIO, (char *)&on);
-	if (rc < 0)
-	{
-		perror("ioctl() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Bind the socket                                           */
-	/*************************************************************/
-	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family      = AF_INET6;
-	memcpy(&addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-	addr.sin6_port        = htons(SERVER_PORT2);
-	rc = bind(listen_sd2,
-			(struct sockaddr *)&addr, sizeof(addr));
-	if (rc < 0)
-	{
-		perror("bind() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
-	/*************************************************************/
-	/* Set the listen back log                                   */
-	/*************************************************************/
-	rc = listen(listen_sd2, 32);
-	if (rc < 0)
-	{
-		perror("listen() failed");
-		close(listen_sd2);
-		exit(-1);
-	}
-
+	create_server(&list_s[0], 8080);
+	create_server(&list_s[1], 12345);
+	create_server(&list_s[2], 5050);
 
 	/*************************************************************/
 	/* Initialize the pollfd structure                           */
@@ -235,12 +115,13 @@ int main (int argc, char *argv[])
 	/*************************************************************/
 	/* Set up the initial listening socket                        */
 	/*************************************************************/
-	fds[0].fd = listen_sd1;
+	fds[0].fd = list_s[0].init_sock;
 	fds[0].events = POLLIN;
-	fds[1].fd = listen_sd2;
+	fds[1].fd = list_s[1].init_sock;
 	fds[1].events = POLLIN;
+	fds[2].fd = list_s[2].init_sock;
+	fds[2].events = POLLIN;
 
-	int	tab[2] = {listen_sd1, listen_sd2};
 	/*************************************************************/
 	/* Initialize the timeout to 3 minutes. If no                */
 	/* activity after 3 minutes this program will end.           */
@@ -305,8 +186,9 @@ int main (int argc, char *argv[])
 				break;
 
 			}
-			if (fds[i].fd == listen_sd1)
+			if (check_init_sock(fds[i].fd, list_s, server_len) != -1)
 			{
+				int	ok_fd = check_init_sock(fds[i].fd, list_s, server_len);
 				/*******************************************************/
 				/* Listening descriptor is readable.                   */
 				/*******************************************************/
@@ -326,7 +208,7 @@ int main (int argc, char *argv[])
 					/* failure on accept will cause us to end the        */
 					/* server.                                           */
 					/*****************************************************/
-					new_sd = accept(listen_sd1, NULL, NULL);
+					new_sd = accept(ok_fd, NULL, NULL);
 					if (new_sd < 0)
 					{
 						if (errno != EWOULDBLOCK)
@@ -353,61 +235,6 @@ int main (int argc, char *argv[])
 					/*****************************************************/
 				} while (new_sd != -1);
 			}
-			else if (fds[i].fd == listen_sd2)
-			{
-				/*******************************************************/
-				/* Listening descriptor is readable.                   */
-				/*******************************************************/
-				printf("  Listening socket is readable\n");
-
-				/*******************************************************/
-				/* Accept all incoming connections that are            */
-				/* queued up on the listening socket before we         */
-				/* loop back and call poll again.                      */
-				/*******************************************************/
-				do
-				{
-					/*****************************************************/
-					/* Accept each incoming connection. If               */
-					/* accept fails with EWOULDBLOCK, then we            */
-					/* have accepted all of them. Any other              */
-					/* failure on accept will cause us to end the        */
-					/* server.                                           */
-					/*****************************************************/
-					new_sd = accept(listen_sd2, NULL, NULL);
-					if (new_sd < 0)
-					{
-						if (errno != EWOULDBLOCK)
-						{
-							perror("  accept() failed");
-							end_server = TRUE;
-						}
-						break;
-					}
-					ioctl(new_sd, FIONBIO, (char *)&on);
-
-					/*****************************************************/
-					/* Add the new incoming connection to the            */
-					/* pollfd structure                                  */
-					/*****************************************************/
-					printf("  New incoming connection - %d\n", new_sd);
-					fds[nfds].fd = new_sd;
-					fds[nfds].events = POLLIN;
-					nfds++;
-
-					/*****************************************************/
-					/* Loop back up and accept another incoming          */
-					/* connection                                        */
-					/*****************************************************/
-				} while (new_sd != -1);
-			}
-
-
-			/*********************************************************/
-			/* This is not the listening socket, therefore an        */
-			/* existing connection must be readable                  */
-			/*********************************************************/
-
 			else
 			{
 				printf("  Descriptor %d is readable\n", fds[i].fd);
