@@ -77,6 +77,10 @@ int	create_server(t_server *s, int port) {
 
 }
 
+int	check_init_sock(int index, int comp, struct pollfd *fds, int len) {
+	if ((index + 1) > len)
+}
+
 int main (int argc, char *argv[])
 {
 	int		server_len = 2;
