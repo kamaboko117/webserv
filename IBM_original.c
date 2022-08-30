@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <netdb.h>
 
 #define SERVER_PORT1  12345
 #define SERVER_PORT2  8080
@@ -15,8 +16,70 @@
 #define TRUE             1
 #define FALSE            0
 
+typedef struct	s_server {
+	int						port;
+	struct	sockaddr_in6	addr;
+	int						init_sock;
+	int						err;
+	int						opt;
+}				t_server;
+
+int	create_server(t_server *s, int port) {
+	s->opt = 1;
+
+	/* socket */
+	s->init_sock = socket(AF_INET6, SOCK_STREAM, getprotobyname("tcp")->p_proto);
+	if (s->init_sock == -1) {
+		perror("socket() failed");
+		return (-1);
+	}
+
+	/* setsockopt */
+	s->err = setsockopt(s->init_sock, SOL_SOCKET, SO_REUSEADDR, (char *)&s->opt, sizeof(s->opt));
+	if (s->err == -1) {
+		perror("setsockopt() failed");
+		close(s->init_sock);
+		return (-1);
+	}
+
+	/* ioctl */
+	s->err = ioctl(s->init_sock, FIONBIO, (char *)&s->opt);
+	if (s->err == -1) {
+		perror("ioctl() failed");
+		close(s->init_sock);
+		return (-1);
+	}
+
+	/* memset addr */
+	memset(&s->addr, 0, sizeof(s->addr));
+
+	s->addr.sin6_family = AF_INET6;
+	memcpy(&s->addr.sin6_addr, &in6addr_any, sizeof(in6addr_any));
+	s->addr.sin6_port = htons(port);
+
+	/* bind */
+	s->err = bind(s->init_sock, (struct sockaddr *)&s->addr, sizeof(s->addr));
+	if (s->err == -1) {
+		perror("bind() failed");
+		close(s->init_sock);
+		return (-1);
+	}
+
+	/* listen */
+	s->err = listen(s->init_sock, 42);
+	if (s->err == -1) {
+		perror("listen() failed");
+		close(s->init_sock);
+		return (-1);
+	}
+
+	return (1);
+
+}
+
 int main (int argc, char *argv[])
 {
+	int		server_len = 2;
 	int    content_len, rc, on = 1;
 	int    listen_sd1 = -1, new_sd = -1, listen_sd2 = -1;
 	int    desc_ready, end_server = FALSE, compress_array = FALSE;
@@ -27,6 +90,11 @@ int main (int argc, char *argv[])
 	struct pollfd fds[200];
 
 	int    nfds = 2, current_size = 0, i, j;
+
+	t_server	list_s[2];
+	memset(list_s, 0, sizeof(list_s));
+
+
 
 	/*************************************************************/
 	/* Create an AF_INET6 stream socket to receive incoming      */
