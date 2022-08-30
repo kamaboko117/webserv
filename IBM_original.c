@@ -187,7 +187,6 @@ int main (int argc, char *argv[])
 		/***********************************************************/
 		printf("Waiting on poll()...\n");
 		rc = poll(fds, nfds, -1);
-		printf("apres poll()\n");
 
 		/***********************************************************/
 		/* Check to see if the poll call failed.                   */
@@ -354,16 +353,14 @@ int main (int argc, char *argv[])
 					/* failure occurs, we will close the                 */
 					/* connection.                                       */
 					/*****************************************************/
-					printf("avant recv\n");
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-					printf("apres recv\n");
 					if (rc < 0)
 					{
-						   if (errno != EWOULDBLOCK)
-						   {
-						   perror("  recv() failed");
-						   close_conn = TRUE;
-						   }
+						if (errno != EWOULDBLOCK)
+						{
+							perror("  recv() failed");
+							close_conn = TRUE;
+						}
 						break;
 					}
 
@@ -388,9 +385,7 @@ int main (int argc, char *argv[])
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					printf("avant send\n");
 					rc = send(fds[i].fd, str1, strlen(str1), 0);
-					printf("apres send\n");
 					printf("rc = %d\n", rc);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)
@@ -412,6 +407,7 @@ int main (int argc, char *argv[])
 				/*******************************************************/
 				if (close_conn)
 				{
+					printf("close_conn\n");
 					close(fds[i].fd);
 					fds[i].fd = -1;
 					compress_array = TRUE;
@@ -431,6 +427,7 @@ int main (int argc, char *argv[])
 		if (compress_array)
 		{
 			compress_array = FALSE;
+			printf("compress_array\n");
 			for (i = 0; i < nfds; i++)
 			{
 				if (fds[i].fd == -1)
