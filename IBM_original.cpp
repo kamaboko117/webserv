@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <netdb.h>
+#include <string>
 
 #define SERVER_PORT1  12345
 #define SERVER_PORT2  8080
@@ -86,7 +87,12 @@ int	check_init_sock(int comp, t_server *list, int server_len) {
 	return (-1);
 }
 
-char	*page_upload = "HTTP/1.1 200 OK\nContent-type: text/html\nContent-Length: 350\n\n<!DOCTYPE><html><body><h1>Default page</h1><form method=\"post\" enctype=\"multipart/form-data\"><div><label for=\"file\">Selectionner le fichier a envoyer</label><input type=\"file\" id=\"file\" name=\"file\" multiple></div><div><button>Envoyer</button></div></form></body></html>\n";
+std::string page_upload;
+
+page_upload.append("HTTP/1.1 200 OK\n");
+page_upload.append("Content-type: text/html\n");
+page_upload.append("content-Length: 283\n\n");
+page_upload.append("<!DOCTYPE><html><body><h1>Default page</h1><form method=\"post\" enctype=\"multipart/form-data\"><div><label for=\"file\">Selectionner le fichier a envoyer</label><input type=\"file\" id=\"file\" name=\"file\" multiple></div><div><button>Envoyer</button></div></form></body></html>\n");
 
 int	len_page_upload = 286;
 
@@ -287,14 +293,14 @@ int main (int argc, char *argv[])
 					/* Data was received                                 */
 					/*****************************************************/
 					content_len = rc;
-					char *str1 = "HTTP/1.1 200 OK\nContent-type: text/html\nContent-Length: 348\n\n";
+					//char *str1 = "HTTP/1.1 200 OK\nContent-type: text/html\nContent-Length: 348\n\n";
 					//printf("  %d bytes received\n", content_len);
 
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
-					rc = send(fds[i].fd, str1, strlen(str1), 0);
-					rc = send(fds[i].fd, page_upload, strlen(page_upload), 0);
+					//rc = send(fds[i].fd, str1, strlen(str1), 0);
+					rc = send(fds[i].fd, page_upload.c_str(), page_upload.size(), 0);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)
 					{
