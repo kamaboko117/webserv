@@ -1,7 +1,7 @@
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <netdb.h>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
 
 #define SERVER_PORT1  12345
 #define SERVER_PORT2  8080
@@ -87,17 +90,35 @@ int	check_init_sock(int comp, t_server *list, int server_len) {
 	return (-1);
 }
 
-std::string page_upload;
-
-page_upload.append("HTTP/1.1 200 OK\n");
-page_upload.append("Content-type: text/html\n");
-page_upload.append("content-Length: 283\n\n");
-page_upload.append("<!DOCTYPE><html><body><h1>Default page</h1><form method=\"post\" enctype=\"multipart/form-data\"><div><label for=\"file\">Selectionner le fichier a envoyer</label><input type=\"file\" id=\"file\" name=\"file\" multiple></div><div><button>Envoyer</button></div></form></body></html>\n");
-
-int	len_page_upload = 286;
-
 int main (int argc, char *argv[])
 {
+	std::string page_upload;
+
+	page_upload.append("HTTP/1.1 200 OK\n");
+	page_upload.append("Content-type: text/html\n");
+	page_upload.append("Content-Length: \n\n");
+
+	std::fstream f;
+
+	f.open("home/default.html", std::ios::in);
+
+	std::string s;
+	std::string data;
+
+	while (1) {
+		//f >> c;
+		getline(f, s);
+		if (f.eof())
+			break;
+		data.append(s);
+	}
+	char	tmp[32];
+	memset(tmp, 0, sizeof(tmp));
+	itoa(data.size(), tmp, 10);
+	page_upload.append(tmp);
+	page_upload.append(data);
+	f.close();
+
 	int		server_len = 3;
 	int    content_len, rc, on = 1;
 	int    listen_sd1 = -1, new_sd = -1, listen_sd2 = -1;
@@ -148,7 +169,7 @@ int main (int argc, char *argv[])
 		/***********************************************************/
 		/* Call poll() and wait 3 minutes for it to complete.      */
 		/***********************************************************/
-		printf("Waiting on poll()...\n");
+		printf("\nWaiting on poll()...\n");
 		rc = poll(fds, nfds, -1);
 
 		/***********************************************************/
@@ -274,7 +295,7 @@ int main (int argc, char *argv[])
 					}
 
 					/* Affichage des requêtes clients */
-					printf("\n%s", buffer);
+					printf("\n******** Client request: ********\n%s", buffer);
 
 					
 
@@ -300,6 +321,9 @@ int main (int argc, char *argv[])
 					/* Echo the data back to the client                  */
 					/*****************************************************/
 					//rc = send(fds[i].fd, str1, strlen(str1), 0);
+					//std::cout << page_upload.c_str() << std::endl;
+					std::cout << "\n******** Server respond: ********" << std::endl;
+					std::cout << page_upload << std::endl;
 					rc = send(fds[i].fd, page_upload.c_str(), page_upload.size(), 0);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)
