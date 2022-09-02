@@ -237,7 +237,7 @@ int main (int argc, char *argv[])
 			}
 			else
 			{
-				printf("  Descriptor %d is readable\n", fds[i].fd);
+				//printf("  Descriptor %d is readable\n", fds[i].fd);
 				close_conn = FALSE;
 				/*******************************************************/
 				/* Receive all incoming data on this socket            */
@@ -263,6 +263,11 @@ int main (int argc, char *argv[])
 						break;
 					}
 
+					/* Affichage des requêtes clients */
+					printf("\n%s", buffer);
+
+
+
 					/*****************************************************/
 					/* Check to see if the connection has been           */
 					/* closed by the client                              */
@@ -279,13 +284,12 @@ int main (int argc, char *argv[])
 					/*****************************************************/
 					content_len = rc;
 					char *str1 = "HTTP/1.1 200 OK\nContent-type: text/plain\nContent-Length: 3\n\nOK\n";
-					printf("  %d bytes received\n", content_len);
+					//printf("  %d bytes received\n", content_len);
 
 					/*****************************************************/
 					/* Echo the data back to the client                  */
 					/*****************************************************/
 					rc = send(fds[i].fd, str1, strlen(str1), 0);
-					printf("rc = %d\n", rc);
 					//rc = send(fds[i].fd, buffer, content_len, 0);
 					if (rc < 0)
 					{
