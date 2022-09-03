@@ -100,16 +100,49 @@ size_t	taking_method(std::string str) {
 
 size_t	taking_port(std::string str) {
 	std::string tmp;
+	size_t	find_host;
+	size_t	start;
+	size_t	end;
 
-	size_t	find_host = str.find("Host:");
+	find_host = str.find("Host: ");
+	if (find_host == std::string::npos)
+		return (-1);
+	start = str.find(":", find_host + 5);
+	tmp = str.substr(start);
+	end = tmp.find("\n");
+	tmp = tmp.substr(0, end);
+	tmp.erase(0, 1);
+	//std::cout << tmp << std::endl;
+	return (atoi(tmp.c_str()));
 }
 
-void	parsing_request(std::string &str) {
+size_t	taking_route(std::string str, std::string &route) {
+
+	size_t	start	= str.find("/");
+	size_t	end		= str.find(" HTTP/1.1");
+
+	if (start == std::string::npos || end == std::string::npos)
+		return (0);
+
+	route = str.substr(start, (end - start));
+	//std::cout << "route = " << route << std::endl;
+	return (1);
+}
+
+void	pars_request(std::string &str) {
 	int			method;
 	int			port;
 	std::string	route;
 
 	method = taking_method(str);
+	if (!taking_route(str, route)) {
+		perror("taking_route");
+	}
+
+	port = taking_port(str);
+	printf("Method = %d\n", method);
+	printf("port = %d\n", port);
+	std::cout << "route = [" << route << "]\n";
 
 }
 
@@ -390,13 +423,14 @@ int main (int argc, char *argv[])
 					/* Affichage des requêtes clients */
 					printf("\n*******************\n");
 					printf("| Client request: |\n");
-					//printf("*******************\n");
-					printf("*******************\n%s", buffer);
+					printf("*******************\n");
+					//printf("*******************\n%s", buffer);
 
 					std::string client;
 					client.append(buffer);
+					pars_request(client);
 
-					taking_method(client);
+					
 
 					/*****************************************************/
 					/* Check to see if the connection has been           */
