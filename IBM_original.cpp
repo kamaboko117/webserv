@@ -82,20 +82,7 @@ size_t	taking_method(std::string str) {
 		res = POST_M;
 	else if (str.find("DELETE") == 0)
 		res = DELETE_M;
-	switch (res) {
-		case GET_M:
-			printf("Methode: GET\n");
-			break;
-		case POST_M:
-			printf("Methode: POST\n");
-			break;
-		case DELETE_M:
-			printf("Methode: DELETE\n");
-			break;
-		default:
-			printf("Methode undified\n");
-	}
-	return (res);
+	return (0);
 }
 
 size_t	taking_port(std::string str) {
@@ -106,13 +93,12 @@ size_t	taking_port(std::string str) {
 
 	find_host = str.find("Host: ");
 	if (find_host == std::string::npos)
-		return (-1);
+		return (0);
 	start = str.find(":", find_host + 5);
 	tmp = str.substr(start);
 	end = tmp.find("\n");
 	tmp = tmp.substr(0, end);
 	tmp.erase(0, 1);
-	//std::cout << tmp << std::endl;
 	return (atoi(tmp.c_str()));
 }
 
@@ -125,7 +111,6 @@ size_t	taking_route(std::string str, std::string &route) {
 		return (0);
 
 	route = str.substr(start, (end - start));
-	//std::cout << "route = " << route << std::endl;
 	return (1);
 }
 
@@ -134,17 +119,16 @@ void	pars_request(std::string &str) {
 	int			port;
 	std::string	route;
 
-	method = taking_method(str);
-	if (!taking_route(str, route)) {
+	method = taking_method(str);		// Method
+	if (!taking_route(str, route)) {	// Route
 		perror("taking_route");
 	}
+	port = taking_port(str);			// Port
 
-	port = taking_port(str);
-	printf("Method = %d\n", method);
-	printf("port = %d\n", port);
+	printf("Port = %d\n", port);
 	std::cout << "route = [" << route << "]\n";
-
-}
+	printf("Method = %d\n", method);
+	}
 
 typedef struct	s_server {
 	int						port;
