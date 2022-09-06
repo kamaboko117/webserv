@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/06 15:12:24 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/06 19:16:07 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,17 +27,22 @@ std::string cgiHandler(char **args, char **env)
     pipe(fd);
     if ((cgiPID = fork()) == 0)
     {
-        close(fd[1]);
-        dup2(fd[0], 0);
+        close(STDOUT_FILENO);
+        close(fd[0]);
+        dup(fd[1]);
         execve(args[0], args, env);
     }
     else
     {
         wait(NULL);
+        close(STDIN_FILENO);
+        close(fd[1]);
+        dup(fd[0]);
+        lseek(fd[0], 0, SEEK_SET);
         int retRead = 1;
-        while (retRead)
+        while (retRead > 0)
         {
-            retRead = read(fd[1], buf, BUFFERSIZE);
+            retRead = read(fd[0], buf, BUFFERSIZE - 1);
             retBody += buf;
         }
     }
@@ -49,9 +54,8 @@ std::string cgiHandler(char **args, char **env)
 int main(){
     char *args[2];
     args[0] = (char *)"/usr/bin/php-cgi7.4";
-    args[1] = (char *)"test.php";
+    args[1] = (char *)"hello.php";
 
     std::string body = cgiHandler(args, NULL);
-    std::cout << "pouet" << std::endl;
     std::cout << body << std::endl;
 }
