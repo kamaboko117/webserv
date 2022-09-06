@@ -33,11 +33,24 @@ void					matchingBrackets(std::vector<std::string> cfg)
 		std::cerr << "Brackets are not matching !" << std::endl;
 }
 
-typedef	std::vector<std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> > t_context;
+typedef	std::vector<std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> >	t_context;
 
 t_context		*getServerContext(std::vector<std::string> cfg)
 {
-	t_context		*context = new t_context;
+	t_context								*context = new t_context;
+	std::vector<std::string>::iterator		begin, end;
+
+	for(std::vector<std::string>::iterator it = cfg.begin(); it != cfg.end(); it++)
+	{
+		if (it->find("server") != std::string::npos)
+		{
+			begin = it;
+			for (; it != cfg.end(); it++)
+			{
+				
+			}
+		}
+	}
 }
 
 void					parseCfgFile(std::string cfg_file_name)
@@ -57,11 +70,11 @@ void					parseCfgFile(std::string cfg_file_name)
 	matchingBrackets(cfg_file_content);
 }
 
-scfg::Server			*getServers(std::string cfg_file_name)
+std::vector<cfg::Server>			*getServers(std::string cfg_file_name)
 {
 	parseCfgFile(cfg_file_name);
 
-	scfg::Server		*servers = new scfg::Server;
+	std::vector<cfg::Server>		*servers = new std::vector<cfg::Server>;
 	return servers;
 }
 

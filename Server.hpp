@@ -6,13 +6,13 @@
 #include <vector>
 #include <iterator>
 
-namespace scfg
+namespace cfg
 {
 	class Server
 	{
 	public :
 
-		typedef std::map< std::string, std::vector< std::string> >	t_location;
+		typedef std::vector<std::map< std::string, std::vector< std::string> > >	t_location;
 
 	private:
 
@@ -29,12 +29,12 @@ namespace scfg
 		//	Getters
 		std::string												getServerName(void);
 		int														getListen(void);
-		location												getLocation(void);
+		t_location												getLocation(void);
 
 		//	Setters
 		void													setServerName(std::string server_name);
 		void													setListen(int listen);
-		void													setLocation(location location);
+		void													setLocation(t_location location);
 	};
 }
 
