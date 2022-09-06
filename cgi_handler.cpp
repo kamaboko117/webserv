@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/06 19:16:07 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/06 19:21:02 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <string>
 #include <sys/wait.h>
 #include <iostream>
+#include <string.h>
 #define BUFFERSIZE 32
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
@@ -42,6 +43,7 @@ std::string cgiHandler(char **args, char **env)
         int retRead = 1;
         while (retRead > 0)
         {
+            bzero(buf, BUFFERSIZE);
             retRead = read(fd[0], buf, BUFFERSIZE - 1);
             retBody += buf;
         }
