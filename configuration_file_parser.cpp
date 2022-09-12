@@ -6,81 +6,41 @@
 #include <iterator>
 #include <algorithm>
 
-// typedef		std::string	(*getValuesOfKey)(std::vector<std::string>);
-
-// const		std::map<std::string, getValuesOfKey>	parsing
-// {
-// 	std::make_pair("server", )
-// }
-
-void					matchingBrackets(std::vector<std::string> cfg)
+std::vector<std::string>		*getFileContent(char *file_name)
 {
-	int		ob = 0;
-	int		cb = 0;
+	std::vector<std::string>	*file_content = new std::vector<std::string>;
+	std::string					buffer;
+	std::ifstream				file;
 
-	for (std::vector<std::string>::iterator it = cfg.begin();
-			it != cfg.end(); it++)
+	try
 	{
-		for (size_t i = 0; i < it->length(); i++)
-		{
-			if (it->at(i) == '{')
-				ob++;
-			else if (it->at(i) == '}')
-				cb++;
-		}
+		file.open(file_name, std::ios_base::in);
+		file.exceptions(std::ifstream::failbit);
 	}
-	if (ob != cb)
-		std::cerr << "Brackets are not matching !" << std::endl;
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return NULL;
+	}
+	while (!file.eof())
+	{
+		std::getline(file, buffer);
+		file_content->push_back(buffer);
+	}
+	return file_content;
 }
 
-typedef	std::vector<std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> >	t_context;
-
-t_context		*getServerContext(std::vector<std::string> cfg)
+std::vector<cfg::Server>	*getServersCfg(std::vector<std::string> file_content)
 {
-	t_context								*context = new t_context;
-	std::vector<std::string>::iterator		begin, end;
-
-	for(std::vector<std::string>::iterator it = cfg.begin(); it != cfg.end(); it++)
-	{
-		if (it->find("server") != std::string::npos)
-		{
-			begin = it;
-			for (; it != cfg.end(); it++)
-			{
-				
-			}
-		}
-	}
-}
-
-void					parseCfgFile(std::string cfg_file_name)
-{
-	std::vector<std::string>		cfg_file_content;
-	std::ifstream					cfg_file;
-	std::string						buffer;
-
-	cfg_file.open(cfg_file_name.c_str());
-	if (cfg_file.is_open() == false)
-		throw ("Couldn't open file: " + cfg_file_name + " !");
-	while (cfg_file.eof() == false)
-	{
-		std::getline(cfg_file, buffer);
-		cfg_file_content.push_back(buffer);
-	}
-	matchingBrackets(cfg_file_content);
-}
-
-std::vector<cfg::Server>			*getServers(std::string cfg_file_name)
-{
-	parseCfgFile(cfg_file_name);
-
-	std::vector<cfg::Server>		*servers = new std::vector<cfg::Server>;
-	return servers;
+	
 }
 
 int		main(int ac, char **av)
 {
+	(void)av;
 	if (ac != 2)
 		return 1;
-	getServers(av[1]);
+	std::vector<std::string>	*file_content = getFileContent(av[1]);
+	for (std::vector<std::string>::iterator it = file_content->begin(); it != file_content->end(); it++)
+		std::cout << *it << std::endl;
 }
