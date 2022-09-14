@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/06 19:21:02 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/14 14:13:49 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #define BUFFERSIZE 32
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
-std::string cgiHandler(char **args, char **env)
+std::string cgiHandler(int method, std::string path, t_location location)
 {
     int         fd[2];
     pid_t       cgiPID;
