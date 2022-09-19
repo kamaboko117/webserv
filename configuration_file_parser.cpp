@@ -8,6 +8,25 @@
 #include <stdio.h>
 
 #define	NPOS std::string::npos
+#define SET ""
+
+std::list<std::string>		*split(std::string str, std::string delimiter)
+{
+	size_t						begin = 0;
+	size_t						end = 0;
+	std::list<std::string>		*sp = new std::list<std::string>;
+	std::string					buff;
+
+	while (end != NPOS)
+	{
+		end = str.find(delimiter, begin);
+		buff = str.substr(begin, end - begin);
+		if (buff.length() > 0)
+			sp->push_back(buff);
+		begin = end + delimiter.length();
+	}
+	return sp;
+}
 
 bool						findKeyWithBrace(std::string str, std::string key, std::list<std::string> &servers)
 {
@@ -46,27 +65,28 @@ bool						findKeyWithBrace(std::string str, std::string key, std::list<std::stri
 	return (servers.size()) ? true : false;
 }
 
-// bool						findKeyWithSemicolon(std::string str, std::string key, std::map<std::string, std::list<std::string> > &attributes)
-// {
-
-// }
-
-std::list<std::string>		*split(std::string str, std::string delimiter)
+bool						isSet(char c, std::string set)
 {
-	size_t						begin = 0;
-	size_t						end = 0;
-	std::list<std::string>		*sp = new std::list<std::string>;
-	std::string					buff;
+	for (size_t i = 0; i < set.length(); i++)
+		if (c == set[i])
+			return true;
+	return false;
+}
 
-	while (end != NPOS)
-	{
-		end = str.find(delimiter, begin);
-		buff = str.substr(begin, end - begin);
-		if (buff.length() > 0)
-			sp->push_back(buff);
-		begin = end + delimiter.length();
-	}
-	return sp;
+bool						findKeyWithSemicolon(std::string str, std::string key, std::list<std::string> &attributes)
+{
+	size_t							i;
+	size_t							semicolonPos = NPOS;
+	std::string						tmp;
+
+	if ((i = str.find(key, 0)) == NPOS)
+		return false;
+	semicolonPos = str.find(';', i);
+	if (str.find('\n', i) < semicolonPos)
+		return false;
+	tmp = str.substr(i, semicolonPos - i);
+	attributes = *split(tmp, " ");
+	return (attributes.size()) ? true : false;
 }
 
 std::string		*getFileContent(char *file_name)
@@ -102,4 +122,11 @@ int		main(int ac, char **av)
 	std::string *s = getFileContent(av[1]);
 	std::list<std::string>	sv;
 	findKeyWithBrace(*s, "server", sv);
+	// for (auto it = sv.begin(); it != sv.end(); it++)
+	// 	std::cout << *it << "-----------------------------" << std::endl;
+	std::list<std::string> k;
+	auto r = sv.begin();
+	std::cout << "Res = " << findKeyWithSemicolon(*r, "allow", k) << std::endl;
+	for (auto it = k.begin(); it != k.end(); it++)
+		std::cout << "Attr = " << *it << std::endl;
 }
