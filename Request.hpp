@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:03:50 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/19 15:49:01 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/20 16:44:43 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define REQUEST_HPP
 # include <string>
 # include <map>
+# include <vector>
 
 class Request
 {
@@ -25,14 +26,25 @@ private:
     
     /*** private functions ***/
     void    initHeaders();
+    void    initMethods();
+    void    setPath(std::string, std::size_t);
+    void    setBody(std::size_t, std::vector<std::string>);
 
     /*** ETC ***/
-    int                                 _method;
+    std::string                         _method;
+    std::vector<std::string>            _methods;
+    std::string                         _path;
+    std::string                         _version;
     std::string                         _body;
     std::map<std::string, std::string>  _headers;
+    int                                 _ret;
 public:
     Request(const std::string req);
     virtual ~Request();
+
+    std::string                         getPath() const;
+    std::map<std::string, std::string>  getHeaders() const;
+    std::string                         getMethod() const;
 };
 
 Request::Request(/* args */)
