@@ -45,6 +45,12 @@ bool						findKeyWithBrace(std::string str, std::string key, std::list<std::stri
 			if (str[i] != key[j])
 				return false;
 		for (; isspace(str[i]) && i < str.length(); i++);
+		if (key == "location")
+		{
+			if (str[i] == '.')
+				i++;
+			for (; (isalnum(str[i]) || str[i] == '/') && i < str.length(); i++);
+		}
 		if (str[i] != '{')
 			return false;
 		if (i < str.length())
@@ -65,19 +71,12 @@ bool						findKeyWithBrace(std::string str, std::string key, std::list<std::stri
 	return (servers.size()) ? true : false;
 }
 
-bool						isSet(char c, std::string set)
-{
-	for (size_t i = 0; i < set.length(); i++)
-		if (c == set[i])
-			return true;
-	return false;
-}
-
-bool						findKeyWithSemicolon(std::string str, std::string key, std::list<std::string> &attributes)
+bool						findKeyWithSemicolon(std::string &str, std::string key, std::list<std::string> &attributes)
 {
 	size_t							i;
 	size_t							semicolonPos = NPOS;
 	std::string						tmp;
+	std::list<std::string>			*sp_tmp;
 
 	if ((i = str.find(key, 0)) == NPOS)
 		return false;
@@ -85,7 +84,10 @@ bool						findKeyWithSemicolon(std::string str, std::string key, std::list<std::
 	if (str.find('\n', i) < semicolonPos)
 		return false;
 	tmp = str.substr(i, semicolonPos - i);
-	attributes = *split(tmp, " ");
+	str.erase(i, semicolonPos - i);
+	sp_tmp = split(tmp, " ");
+	attributes = *sp_tmp;
+	delete sp_tmp;
 	return (attributes.size()) ? true : false;
 }
 
@@ -114,19 +116,23 @@ std::string		*getFileContent(char *file_name)
 	return file_content;
 }
 
+void			getServers(char *file_name, std::vector<cfg::Server> &servers)
+{
+	std::string						*file_content = getFileContent(file_name);
+	std::list<std::string>			raw_servers;
+	std::list<std::string>			raw_locations;
+
+	if (findKeyWithBrace(*file_content, "server", raw_servers) == false)
+	{
+		delete file_content;
+		return ;
+	}
+	for (std::list<std::string>::iterator it = raw_servers.begin(); it != raw_servers.end(); it++)
+	{
+		
+	}
+}
+
 int		main(int ac, char **av)
 {
-	(void)av;
-	if (ac != 2)
-		return 1;
-	std::string *s = getFileContent(av[1]);
-	std::list<std::string>	sv;
-	findKeyWithBrace(*s, "server", sv);
-	// for (auto it = sv.begin(); it != sv.end(); it++)
-	// 	std::cout << *it << "-----------------------------" << std::endl;
-	std::list<std::string> k;
-	auto r = sv.begin();
-	std::cout << "Res = " << findKeyWithSemicolon(*r, "allow", k) << std::endl;
-	for (auto it = k.begin(); it != k.end(); it++)
-		std::cout << "Attr = " << *it << std::endl;
 }
