@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 14:13:53 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 17:24:50 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,12 +31,29 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["SERVER_PROTOCOL"] = "HTTP/1.1";
     ret["SERVER_PORT"] = ""; //missing ==> get from conf
     ret["REQUEST_METHOD"] = req.getMethod();
-    ret["PATH_INFO"] = req.getPath();
-    ret["PATH_TRANSLATED"] = req.getPath(); //??????
+    ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
+    ret["PATH_TRANSLATED"] = ret["PATH_INFO"]; //conf path + path info basically (i think)
     ret["SCRIPT_NAME"] = ""; //missing ==> conf
-    ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?'), std::string::npos);
+    ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
     
     return(ret);
+}
+
+char    *ft_strdupcpp(const char *src){
+    std::size_t i = 0;
+
+    while (src[i])
+        i++;
+    char    *ret = new char[i + 1];
+    i = 0;
+    while (src[i])
+    {
+        ret[i] = src[i];
+        i++;
+    }
+    ret[i] = '\0';
+    return(ret);
+    
 }
 
 std::string cgiHandler(std::string strReq)//, t_location location)
@@ -49,17 +66,27 @@ std::string cgiHandler(std::string strReq)//, t_location location)
     pid_t                               cgiPID;
     std::string                         retBody;
     char                                buf[BUFFERSIZE];
-    char                                *args[2];
+    char                                *args[3];
     std::map<std::string, std::string>  m_env;
     char                                **env;
 
     args[0] = (char *)"/usr/bin/php-cgi7.4";
     args[1] = strdup(req.getPath().substr(0, req.getPath().find('?')).c_str());
+    args[2] = NULL;
+    std::cout << "/*/*/*/*" << std::endl;
     m_env = CGISetEnv(req);
-
+    std::cout << "/*/*/*/*" << std::endl;
     for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
         std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
 
+    env = new char*[m_env.size() + 1];
+    std::size_t i = 0;
+    for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++){
+        std::string var = it->first + "=" + it->second;
+        env[i] = ft_strdupcpp(var.c_str());
+        i++;
+    }
+    env[i] = NULL;
     pipe(fd);
     if ((cgiPID = fork()) == 0)
     {

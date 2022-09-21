@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 14:14:08 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 15:01:05 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ Request::Request(const std::string req)
     std::vector<std::string> line = reqSplit(req);
     std::string key;
     std::string value;
-    
     //first line: METHOD + PATH
     std::size_t i = line[0].find_first_of(' ');
     if (i == std::string::npos){
@@ -40,7 +39,6 @@ Request::Request(const std::string req)
             _ret = 400;
         }
     }
-    
     //headers
     i = 1;
     for (; i < line.size() ; i++){
@@ -53,9 +51,8 @@ Request::Request(const std::string req)
         if (_headers.count(key)) //if header is compatible
             _headers[key] = value;
     }
-
     //body
-    setBody(i, line);  
+    setBody(i, line);
 }
 
 Request::~Request(){}
@@ -131,7 +128,7 @@ void    Request::setBody(std::size_t i, std::vector<std::string> line){
     if (line[i] != "\r")
         return ;
     i++;
-    while (line[i] != "\r"){
+    while (i < line.size() && line[i] != "\r"){
         _body.append(line[i]);
         _body.push_back('\n');
         i++;

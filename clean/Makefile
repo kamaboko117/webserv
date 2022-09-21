@@ -6,13 +6,13 @@
 #    By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/09/14 13:32:51 by dclark            #+#    #+#              #
-#    Updated: 2022/09/21 14:03:55 by asaboure         ###   ########.fr        #
+#    Updated: 2022/09/21 14:57:02 by asaboure         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 IDIR	=	./includes
 CC		=	c++
-CFLAGS	=	-Wall -Werror -Wextra -std=c++98 -I$(IDIR)
+CFLAGS	=	-Wall -Werror -Wextra -std=c++98 -I$(IDIR) -g
 
 ODIR	=	./.obj
 SDIR	=	./src
