@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 17:24:50 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 18:24:49 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,11 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["PATH_TRANSLATED"] = ret["PATH_INFO"]; //conf path + path info basically (i think)
     ret["SCRIPT_NAME"] = ""; //missing ==> conf
     ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
+    ret["REMOTE_HOST"] = "";
+    ret["REMOTE_ADDR"] = ""; //==>conf
+    //ret["AUTH_TYPE"] = "";
+    ret["CONTENT_TYPE"] = headers["CONTENT_TYPE"];
+    
     
     return(ret);
 }
@@ -70,11 +75,11 @@ std::string cgiHandler(std::string strReq)//, t_location location)
     std::map<std::string, std::string>  m_env;
     char                                **env;
 
-    args[0] = (char *)"/usr/bin/php-cgi7.4";
-    args[1] = strdup(req.getPath().substr(0, req.getPath().find('?')).c_str());
-    args[2] = NULL;
     std::cout << "/*/*/*/*" << std::endl;
     m_env = CGISetEnv(req);
+    args[0] = (char *)"/usr/bin/php-cgi7.4";
+    args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
+    args[2] = NULL;
     std::cout << "/*/*/*/*" << std::endl;
     for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
         std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
@@ -110,8 +115,15 @@ std::string cgiHandler(std::string strReq)//, t_location location)
             retBody += buf;
         }
     }
+
     if (cgiPID == 0)
         return ("");
+    for (size_t i = 0; env[i]; i++)
+		delete[] env[i];
+	delete[] env;
+    delete[] args[1];
+    std::cout << std::endl << "*************************" << std::endl;
+    std::cout << "CGI RETURN:" << std::endl << retBody << std::endl;
     return (retBody);
 }
 
