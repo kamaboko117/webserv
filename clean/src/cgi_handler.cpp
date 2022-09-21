@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/20 17:02:31 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 14:13:53 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,23 +35,30 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["PATH_TRANSLATED"] = req.getPath(); //??????
     ret["SCRIPT_NAME"] = ""; //missing ==> conf
     ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?'), std::string::npos);
-
+    
+    return(ret);
 }
 
 std::string cgiHandler(std::string strReq)//, t_location location)
 {
+    std::cout << std::endl << "*****************************************" <<std::endl;
+    std::cout << "ENTERED CGIHANDLER" << std::endl;
+
     Request                             req(strReq);
     int                                 fd[2];
     pid_t                               cgiPID;
     std::string                         retBody;
     char                                buf[BUFFERSIZE];
-    char                                **args;
+    char                                *args[2];
     std::map<std::string, std::string>  m_env;
     char                                **env;
 
     args[0] = (char *)"/usr/bin/php-cgi7.4";
     args[1] = strdup(req.getPath().substr(0, req.getPath().find('?')).c_str());
     m_env = CGISetEnv(req);
+
+    for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
+        std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
 
     pipe(fd);
     if ((cgiPID = fork()) == 0)
@@ -77,15 +84,15 @@ std::string cgiHandler(std::string strReq)//, t_location location)
         }
     }
     if (cgiPID == 0)
-        exit(0);
+        return ("");
     return (retBody);
 }
 
-int main(){
-    // char *args[2];
-    // args[0] = (char *)"/usr/bin/php-cgi7.4";
-    // args[1] = (char *)"hello.php";
+// int main(){
+//     // char *args[2];
+//     // args[0] = (char *)"/usr/bin/php-cgi7.4";
+//     // args[1] = (char *)"hello.php";
 
-    // std::string body = cgiHandler(args, NULL);
-    // std::cout << body << std::endl;
-}
+//     // std::string body = cgiHandler(args, NULL);
+//     // std::cout << body << std::endl;
+// }

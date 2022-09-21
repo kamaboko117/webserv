@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/20 16:45:10 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 14:14:08 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,53 @@
 #include <vector>
 #include <iostream>
 
-std::vector<std::string>    reqSplit(std::string req){
+Request::Request(const std::string req)
+: _method(""), _path(""), _version(""), _body(""), _ret(200){
+    initHeaders();
+    initMethods();
+    std::vector<std::string> line = reqSplit(req);
+    std::string key;
+    std::string value;
+    
+    //first line: METHOD + PATH
+    std::size_t i = line[0].find_first_of(' ');
+    if (i == std::string::npos){
+        _ret = 400;
+        std::cerr << "Request Syntax Error: no space after method" << std::endl;
+    }
+    if (_ret != 400)
+        setPath(req, i);
+    _method.assign(line[0], 0, i);
+    for (size_t j = 0; j < _methods.size(); j++)
+    {
+        if (_methods[j] == _method)
+            break;
+        if (j == _methods.size() - 1){
+            std::cerr << "Request Error: Invalid Method[" << _method << "]" << std::endl;
+            _ret = 400;
+        }
+    }
+    
+    //headers
+    i = 1;
+    for (; i < line.size() ; i++){
+        //"The request/status line and headers must all end with <CR><LF>
+        //(that is, a carriage return followed by a line feed)." 
+        if (_ret == 400 || line[i] == "\r" || line[i] == "")
+            break;
+        key = line[i].substr(0, line[i].find_first_of(':'));
+        value = line[i].substr(line[i].find_first_of(':'));
+        if (_headers.count(key)) //if header is compatible
+            _headers[key] = value;
+    }
+
+    //body
+    setBody(i, line);  
+}
+
+Request::~Request(){}
+
+std::vector<std::string>    Request::reqSplit(std::string req){
     std::vector<std::string>    line;
     std::size_t                 pos = 0;
 
@@ -90,50 +136,6 @@ void    Request::setBody(std::size_t i, std::vector<std::string> line){
         _body.push_back('\n');
         i++;
     }
-}
-
-Request::Request(const std::string req)
-: _method(""), _path(""), _version(""), _body(""), _ret(200){
-    initHeaders();
-    initMethods();
-    std::vector<std::string> line = reqSplit(req);
-    std::string key;
-    std::string value;
-    
-    //first line: METHOD + PATH
-    std::size_t i = line[0].find_first_of(' ');
-    if (i == std::string::npos){
-        _ret = 400;
-        std::cerr << "Request Syntax Error: no space after method" << std::endl;
-    }
-    if (_ret != 400)
-        setPath(req, i);
-    _method.assign(line[0], 0, i);
-    for (size_t i = 0; i < _methods.size(); i++)
-    {
-        if (_methods[i] == _method)
-            break;
-        if (i == _methods.size() - 1){
-            std::cerr << "Request Error: Invalid Method[" << _method << "]" << std::endl;
-            _ret = 400;
-        }
-    }
-    
-    //headers
-    std::size_t i;
-    for (; i < line.size() ; i++){
-        //"The request/status line and headers must all end with <CR><LF>
-        //(that is, a carriage return followed by a line feed)." 
-        if (_ret == 400 || line[i] == "\r" || line[i] == "")
-            break;
-        key = line[i].substr(0, line[i].find_first_of(':'));
-        value = line[i].substr(line[i].find_first_of(':'));
-        if (_headers.count(key)) //if header is compatible
-            _headers[key] = value;
-    }
-
-    //body
-    setBody(i, line);  
 }
 
 std::string Request::getPath() const{

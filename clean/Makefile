@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: dclark <dclark@student.42.fr>              +#+  +:+       +#+         #
+#    By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/09/14 13:32:51 by dclark            #+#    #+#              #
-#    Updated: 2022/09/14 15:01:55 by dclark           ###   ########.fr        #
+#    Updated: 2022/09/21 14:03:55 by asaboure         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,9 @@ NAME	=	webserv
 _DEPS	=	Create_socket.hpp \
 			ft_itoa_string.hpp \
 			request_client.hpp \
-			Server.hpp
+			Server.hpp \
+			cgi_handler.hpp \
+			Request.hpp
 
 DEPS	=	$(patsubst %,$(IDIR)/%,$(_DEPS))
 
@@ -30,7 +32,9 @@ _OBJ	=	main.o \
 			Create_socket.o \
 			ft_itoa_string.o \
 			request_client.o \
-			Server.o
+			Server.o \
+			cgi_handler.o \
+			Request.o
 
 OBJ		=	$(patsubst %,$(ODIR)/%,$(_OBJ))
 

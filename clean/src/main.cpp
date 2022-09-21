@@ -18,6 +18,7 @@
 #include "Create_socket.hpp"
 #include "ft_itoa_string.hpp"
 #include <vector>
+#include "cgi_handler.hpp"
 
 #define SERVER_PORT1	12345
 #define SERVER_PORT2	8080
@@ -189,6 +190,8 @@ int main (int argc, char *argv[])
 					std::string client;
 					client.append(buffer);
 					pars_request(r_s, client);
+
+					cgiHandler(client);
 
 					if (rc == 0)
 					{

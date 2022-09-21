@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:03:50 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/20 16:44:43 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/21 14:13:44 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,11 @@ private:
     Request &operator=(const Request &rhs);
     
     /*** private functions ***/
-    void    initHeaders();
-    void    initMethods();
-    void    setPath(std::string, std::size_t);
-    void    setBody(std::size_t, std::vector<std::string>);
+    void                        initHeaders();
+    void                        initMethods();
+    void                        setPath(std::string, std::size_t);
+    void                        setBody(std::size_t, std::vector<std::string>);
+    std::vector<std::string>    reqSplit(std::string);
 
     /*** ETC ***/
     std::string                         _method;
@@ -46,14 +47,5 @@ public:
     std::map<std::string, std::string>  getHeaders() const;
     std::string                         getMethod() const;
 };
-
-Request::Request(/* args */)
-{
-}
-
-Request::~Request()
-{
-}
-
 
 #endif
