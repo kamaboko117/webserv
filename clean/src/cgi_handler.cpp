@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/22 13:38:30 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/22 13:51:44 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <string.h>
 #include <map>
 #include "Request.hpp"
+#include "ft_itoa_string.hpp"
 #define BUFFERSIZE 32
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
@@ -128,7 +129,11 @@ std::string cgiHandler(std::string strReq)//, t_location location)
     delete[] args[1];
     std::cout << std::endl << "*************************" << std::endl;
     std::cout << "CGI RETURN:" << std::endl << retBody << std::endl;
-    return (retBody);
+
+    std::string ret = "HTTP/1.1 200 OK\nContent-type: text/html\nContent-Length: ";
+    ft_itoa_string(retBody.size(), ret);
+    ret += "\n\n" + retBody;
+    return (ret);
 }
 
 // int main(){
