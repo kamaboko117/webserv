@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/22 13:51:44 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/22 14:59:37 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ std::string cgiHandler(std::string strReq)//, t_location location)
     Request                             req(strReq);
     int                                 fd[2];
     pid_t                               cgiPID;
-    std::string                         retBody;
+    std::string                         cgiRet;
     char                                buf[BUFFERSIZE];
     char                                *args[3];
     std::map<std::string, std::string>  m_env;
@@ -117,7 +117,7 @@ std::string cgiHandler(std::string strReq)//, t_location location)
         {
             bzero(buf, BUFFERSIZE);
             retRead = read(fd[0], buf, BUFFERSIZE - 1);
-            retBody += buf;
+            cgiRet += buf;
         }
     }
 
@@ -128,10 +128,14 @@ std::string cgiHandler(std::string strReq)//, t_location location)
 	delete[] env;
     delete[] args[1];
     std::cout << std::endl << "*************************" << std::endl;
-    std::cout << "CGI RETURN:" << std::endl << retBody << std::endl;
+    std::cout << "CGI RETURN:" << std::endl << cgiRet << std::endl;
 
-    std::string ret = "HTTP/1.1 200 OK\nContent-type: text/html\nContent-Length: ";
+    std::string retBody = cgiRet.substr(cgiRet.find("\r\n\r\n") + 2, std::string::npos);
+    std::string retHeader = cgiRet.substr(0, cgiRet.find("\r\n\r\n"));
+    std::cout << "retHeader:" << std::endl << retHeader << std::endl;
+    std::string ret = "HTTP/1.1 200 OK\nContent-Length: ";
     ft_itoa_string(retBody.size(), ret);
+    ret += "\n" + retHeader;
     ret += "\n\n" + retBody;
     return (ret);
 }
