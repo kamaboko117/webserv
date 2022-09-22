@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 18:24:49 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/22 13:38:30 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,19 +24,23 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     std::map<std::string, std::string> ret;
     std::map<std::string, std::string> headers = req.getHeaders();
     
+    ret["REDIRECT_STATUS"] = "200";
+
     ret["SERVER_SOFTWARE"] = "webserv/1.0";
-    ret["SERVER_NAME"] = //missing ==> get from conf (t_location?)
+      ret["SERVER_NAME"] = //missing ==> get from conf (t_location?)
     ret["GATEWAY_INTERFACE"] = "CGI/1.1" ;
     
     ret["SERVER_PROTOCOL"] = "HTTP/1.1";
-    ret["SERVER_PORT"] = ""; //missing ==> get from conf
+      ret["SERVER_PORT"] = ""; //missing ==> get from conf
     ret["REQUEST_METHOD"] = req.getMethod();
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
-    ret["PATH_TRANSLATED"] = ret["PATH_INFO"]; //conf path + path info basically (i think)
-    ret["SCRIPT_NAME"] = ""; //missing ==> conf
+    if (ret["PATH_INFO"] == "/")
+        ret["PATH_INFO"] = "/home/form.html"; //conf
+      ret["PATH_TRANSLATED"] = "/mnt/nfs/homes/asaboure/42/webserv" + ret["PATH_INFO"]; //conf path + path info basically (i think)
+      ret["SCRIPT_NAME"] = ""; //missing ==> conf
     ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
-    ret["REMOTE_HOST"] = "";
-    ret["REMOTE_ADDR"] = ""; //==>conf
+      ret["REMOTE_HOST"] = "";
+      ret["REMOTE_ADDR"] = ""; //==>conf
     //ret["AUTH_TYPE"] = "";
     ret["CONTENT_TYPE"] = headers["CONTENT_TYPE"];
     

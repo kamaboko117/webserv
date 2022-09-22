@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 15:01:05 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/22 13:18:50 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Request::Request(const std::string req)
     std::vector<std::string> line = reqSplit(req);
     std::string key;
     std::string value;
+
     //first line: METHOD + PATH
     std::size_t i = line[0].find_first_of(' ');
     if (i == std::string::npos){
@@ -39,6 +40,7 @@ Request::Request(const std::string req)
             _ret = 400;
         }
     }
+    
     //headers
     i = 1;
     for (; i < line.size() ; i++){

@@ -191,7 +191,7 @@ int main (int argc, char *argv[])
 					client.append(buffer);
 					pars_request(r_s, client);
 
-					cgiHandler(client);
+					std::string responseCGI = cgiHandler(client);
 
 					if (rc == 0)
 					{
@@ -208,7 +208,7 @@ int main (int argc, char *argv[])
 					if (r_s.route == "/favicon.ico")
 						rc = send(fds[i].fd, NULL, 0, 0);
 					else {
-						rc = send(fds[i].fd, page_upload.c_str(), page_upload.size(), 0);
+						rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
 					}
 					//
 					//      CCCCC    GGGGG    IIIII
