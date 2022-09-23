@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/22 14:59:37 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/23 15:19:05 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,22 +66,19 @@ char    *ft_strdupcpp(const char *src){
     
 }
 
-std::string cgiHandler(std::string strReq)//, t_location location)
+std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location location)
 {
     std::cout << std::endl << "*****************************************" <<std::endl;
     std::cout << "ENTERED CGIHANDLER" << std::endl;
 
-    Request                             req(strReq);
     int                                 fd[2];
     pid_t                               cgiPID;
     std::string                         cgiRet;
     char                                buf[BUFFERSIZE];
     char                                *args[3];
-    std::map<std::string, std::string>  m_env;
     char                                **env;
 
     std::cout << "/*/*/*/*" << std::endl;
-    m_env = CGISetEnv(req);
     args[0] = (char *)"/usr/bin/php-cgi7.4";
     args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
     args[2] = NULL;
@@ -138,6 +135,24 @@ std::string cgiHandler(std::string strReq)//, t_location location)
     ret += "\n" + retHeader;
     ret += "\n\n" + retBody;
     return (ret);
+}
+
+std::string requestHandler(std::string strReq){
+    Request                             req(strReq);
+    std::map<std::string, std::string>  m_env;
+    std::string                         type;
+
+    m_env = CGISetEnv(req);
+    std::string extension = "";
+    if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
+        extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
+    if ( extension == ".php" || extension == ".html")
+        return (cgiHandler(m_env));
+    if (extension == "ico")
+        type = "images/x-icon";
+
+    return (transferFile(type, req));
+    
 }
 
 // int main(){

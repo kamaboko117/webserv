@@ -191,7 +191,7 @@ int main (int argc, char *argv[])
 					client.append(buffer);
 					pars_request(r_s, client);
 
-					std::string responseCGI = cgiHandler(client);
+					std::string responseCGI = requestHandler(client);
 
 					if (rc == 0)
 					{
