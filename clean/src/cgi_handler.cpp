@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/23 15:19:05 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/26 16:46:39 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include <string>
 #include <sys/wait.h>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <string.h>
 #include <map>
 #include "Request.hpp"
@@ -137,6 +139,20 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
     return (ret);
 }
 
+std::string transferFile(std::string type, std::string file){
+    std::string         ret = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: " + type + "\r\nContent-Length: ";
+    std::ifstream       f(file.c_str());
+    std::stringstream   ss;
+    
+    ss << f.rdbuf();
+    ft_itoa_string(ss.str().length(), ret);
+    ret += "\r\n\r\n";
+    ret += ss.str();
+
+    // std::cout << "ret:\n" << ret << std::endl;
+    return (ret);
+}
+
 std::string requestHandler(std::string strReq){
     Request                             req(strReq);
     std::map<std::string, std::string>  m_env;
@@ -148,10 +164,12 @@ std::string requestHandler(std::string strReq){
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
     if ( extension == ".php" || extension == ".html")
         return (cgiHandler(m_env));
-    if (extension == "ico")
+    else if (extension == ".ico")
         type = "images/x-icon";
-
-    return (transferFile(type, req));
+    else
+        type = "text/plain";
+    std::cout << "***************\nextension: " << extension << std::endl;
+    return (transferFile(type, m_env["PATH_TRANSLATED"]));
     
 }
 
