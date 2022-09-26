@@ -205,11 +205,11 @@ int main (int argc, char *argv[])
 					printf("| Server respond: |\n");
 					printf("*******************\n");
 					//std::cout << page_upload << std::endl;
-					if (r_s.route == "/favicon.ico")
-						rc = send(fds[i].fd, NULL, 0, 0);
-					else {
+					// if (r_s.route == "/favicon.ico")
+					// 	rc = send(fds[i].fd, NULL, 0, 0);
+					// else {
 						rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
-					}
+					// }
 					//
 					//      CCCCC    GGGGG    IIIII
 					//      C        G          I

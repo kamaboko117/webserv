@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/26 16:46:39 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/26 17:04:02 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,7 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
 }
 
 std::string transferFile(std::string type, std::string file){
-    std::string         ret = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: " + type + "\r\nContent-Length: ";
+    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: " + type + "\r\nContent-Length: ";
     std::ifstream       f(file.c_str());
     std::stringstream   ss;
     
@@ -149,7 +149,7 @@ std::string transferFile(std::string type, std::string file){
     ret += "\r\n\r\n";
     ret += ss.str();
 
-    // std::cout << "ret:\n" << ret << std::endl;
+    std::cout << "ret:\n" << ret << std::endl;
     return (ret);
 }
 
@@ -164,11 +164,10 @@ std::string requestHandler(std::string strReq){
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
     if ( extension == ".php" || extension == ".html")
         return (cgiHandler(m_env));
-    else if (extension == ".ico")
-        type = "images/x-icon";
+    // else if (extension == ".ico")
+    //     type = "images/x-icon";
     else
         type = "text/plain";
-    std::cout << "***************\nextension: " << extension << std::endl;
     return (transferFile(type, m_env["PATH_TRANSLATED"]));
     
 }
