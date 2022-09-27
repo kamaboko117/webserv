@@ -6,7 +6,7 @@
 #    By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/09/14 13:32:51 by dclark            #+#    #+#              #
-#    Updated: 2022/09/21 14:57:02 by asaboure         ###   ########.fr        #
+#    Updated: 2022/09/27 16:54:16 by asaboure         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,7 +24,8 @@ _DEPS	=	Create_socket.hpp \
 			request_client.hpp \
 			Server.hpp \
 			cgi_handler.hpp \
-			Request.hpp
+			Request.hpp \
+			utils.hpp 
 
 DEPS	=	$(patsubst %,$(IDIR)/%,$(_DEPS))
 
@@ -34,7 +35,8 @@ _OBJ	=	main.o \
 			request_client.o \
 			Server.o \
 			cgi_handler.o \
-			Request.o
+			Request.o \
+			utils.o
 
 OBJ		=	$(patsubst %,$(ODIR)/%,$(_OBJ))
 
