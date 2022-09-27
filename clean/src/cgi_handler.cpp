@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/26 17:04:02 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/27 16:07:10 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,12 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     return(ret);
 }
 
+int ft_stoi(const std::string &s) {
+    int i;
+    std::istringstream(s) >> i;
+    return i;
+}
+
 char    *ft_strdupcpp(const char *src){
     std::size_t i = 0;
 
@@ -67,6 +73,23 @@ char    *ft_strdupcpp(const char *src){
     return(ret);
     
 }
+
+std::string errorPage(int code){
+    std::string ret = "HTTP/1.1 ";
+    std::string body = "error: ";
+std::cout << "\n\n***************error" << std::endl;
+    ft_itoa_string(code, ret);
+    ft_itoa_string(code, body);
+    ret += "\r\nContent-Type: text/plain\r\nContent-Length: ";
+    ft_itoa_string(body.length(), ret);
+    ret += "\r\n\r\n";
+    ft_itoa_string(code, body);
+    ret += body;
+
+    std::cout << "ret:\n" << ret << std::endl; 
+    return (ret);
+}
+
 
 std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location location)
 {
@@ -134,8 +157,15 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
     std::cout << "retHeader:" << std::endl << retHeader << std::endl;
     std::string ret = "HTTP/1.1 200 OK\nContent-Length: ";
     ft_itoa_string(retBody.size(), ret);
-    ret += "\n" + retHeader;
-    ret += "\n\n" + retBody;
+    
+    std::size_t pos = retHeader.find("Status:");
+    if (pos != std::string::npos){
+        return (errorPage(ft_stoi(retHeader.substr(pos + 8, std::string::npos))));
+    }
+
+    ret += "\r\n" + retHeader;
+    ret += "\r\n\r\n" + retBody;
+
     return (ret);
 }
 
@@ -153,19 +183,28 @@ std::string transferFile(std::string type, std::string file){
     return (ret);
 }
 
+bool existsFile (const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
 std::string requestHandler(std::string strReq){
     Request                             req(strReq);
     std::map<std::string, std::string>  m_env;
     std::string                         type;
 
     m_env = CGISetEnv(req);
+    if (!existsFile(m_env["PATH_TRANSLATED"]))
+        return errorPage(404);
     std::string extension = "";
     if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
     if ( extension == ".php" || extension == ".html")
         return (cgiHandler(m_env));
-    // else if (extension == ".ico")
-    //     type = "images/x-icon";
+    else if (extension == ".ico")
+        type = "images/x-icon";
+    // else if (extension == ".mp4")
+    //     type = "video/mp4";
     else
         type = "text/plain";
     return (transferFile(type, m_env["PATH_TRANSLATED"]));
