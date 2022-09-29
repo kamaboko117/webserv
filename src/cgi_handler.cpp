@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/27 16:59:27 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/29 14:04:57 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
         ret["PATH_INFO"] = "/home/form.html"; //conf
-      ret["PATH_TRANSLATED"] = "/mnt/nfs/homes/asaboure/42/webserv" + ret["PATH_INFO"]; //conf path + path info basically (i think)
+      ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
       ret["SCRIPT_NAME"] = ""; //missing ==> conf
     ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
       ret["REMOTE_HOST"] = "";
