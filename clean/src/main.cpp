@@ -62,36 +62,18 @@ int main (int argc, char *argv[])
 	struct pollfd fds[server_list.size() * 10];
 	memset(fds, 0, sizeof(fds));
 
+	int	len = 0;
 	for (size_t i = 0; i < server_list.size(); i++) {
-		create_socket(server_list[i]);
-		fds[i].fd = server_list[i].getSocket();
-		fds[i].events = POLLIN;
+		if (create_socket(server_list[i]) != -1) {
+			len++;
+			fds[i].fd = server_list[i].getSocket();
+			fds[i].events = POLLIN;
+		}
 	}
 
-
-	page_upload.append("HTTP/1.1 200 OK\n");
-	page_upload.append("Content-type: text/html\n");
-	page_upload.append("Content-Length: ");
-
-	std::fstream f;
-
-	f.open("home/form.html", std::ios::in);
-
-	std::string s;
-	std::string data;
-
-	while (1) {
-		//f >> c;
-		getline(f, s);
-		if (f.eof())
-			break;
-		data.append(s);
-	}
-	ft_itoa_string(data.size(), page_upload);
-	page_upload.append("\n\n");
-	page_upload.append(data);
-	f.close();
-
+	/* Aucun port n'a pu être aloué */
+	if (len == 0)
+		return (EXIT_FAILURE);
 	int		server_len = server_list.size();
 	int    content_len, rc, on = 1;
 	int    new_sd = -1;
