@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:03:50 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/21 14:13:44 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/29 15:50:05 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ public:
     std::string                         getPath() const;
     std::map<std::string, std::string>  getHeaders() const;
     std::string                         getMethod() const;
+    std::string                         getBody() const;
 };
 
 #endif

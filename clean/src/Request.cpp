@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/22 13:18:50 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/29 15:49:33 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,4 +147,8 @@ std::map<std::string, std::string>  Request::getHeaders() const{
 
 std::string Request::getMethod() const{
     return (_method);
+}
+
+std::string Request::getBody() const{
+    return (_body);
 }
