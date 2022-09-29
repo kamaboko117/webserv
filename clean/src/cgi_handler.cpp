@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/27 16:59:27 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/09/29 16:30:53 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
         ret["PATH_INFO"] = "/home/form.html"; //conf
-      ret["PATH_TRANSLATED"] = "/mnt/nfs/homes/asaboure/42/webserv" + ret["PATH_INFO"]; //conf path + path info basically (i think)
+      ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
       ret["SCRIPT_NAME"] = ""; //missing ==> conf
     ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
       ret["REMOTE_HOST"] = "";
@@ -125,7 +125,7 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
 
     std::string retBody = cgiRet.substr(cgiRet.find("\r\n\r\n") + 2, std::string::npos);
     std::string retHeader = cgiRet.substr(0, cgiRet.find("\r\n\r\n"));
-    std::cout << "retHeader:" << std::endl << retHeader << std::endl;
+    // std::cout << "retHeader:" << std::endl << retHeader << std::endl;
     std::string ret = "HTTP/1.1 200 OK\nContent-Length: ";
     ft_itoa_string(retBody.size(), ret);
     
@@ -148,7 +148,34 @@ std::string transferFile(std::string type, std::string file){
     ret += "\r\n\r\n";
     ret += ss.str();
 
-    std::cout << "ret:\n" << ret << std::endl;
+    // std::cout << "ret:\n" << ret << std::endl;
+    return (ret);
+}
+
+std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
+    std::ofstream outfile(m_env["PATH_TRANSLATED"].c_str());
+
+    if (!outfile)
+        return (errorPage(500));
+    outfile << req.getBody() << std::endl;
+    outfile.close();
+
+    std::string ret = "HTTP/1.1 201\r\nLocation: ";
+    ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
+
+    return (ret);
+}
+
+std::string post(std::map<std::string, std::string> m_env, Request &req){
+    if (!existsFile(m_env["PATH_TRANSLATED"])){
+        return (uploadFile(m_env, req));
+    }
+
+    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    std::ifstream       f(m_env["PATH_TRANSLATED"].c_str());
+
+
+    // std::cout << "ret:\n" << ret << std::endl;
     return (ret);
 }
 
@@ -156,9 +183,10 @@ std::string requestHandler(std::string strReq){
     Request                             req(strReq);
     std::map<std::string, std::string>  m_env;
     std::string                         type;
-
+    
     m_env = CGISetEnv(req);
-    if (!existsFile(m_env["PATH_TRANSLATED"]))
+
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(404);
     std::string extension = "";
     if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
@@ -171,6 +199,10 @@ std::string requestHandler(std::string strReq){
         type = "video/mp4";
     else
         type = "text/plain";
-    return (transferFile(type, m_env["PATH_TRANSLATED"]));
+    if (m_env["REQUEST_METHOD"] == "POST")
+    {
+        return (post(m_env, req));
+    }
     
+    return (transferFile(type, m_env["PATH_TRANSLATED"]));
 }
