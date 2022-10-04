@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
 	if (len == 0)
 		return (EXIT_FAILURE);
 	int		server_len = server_list.size();
-	int    content_len, rc, on = 1;
+	int    rc, on = 1;
 	int    new_sd = -1;
 	int    end_server = FALSE, compress_array = FALSE;
 	int    close_conn;
@@ -165,15 +165,18 @@ int main (int argc, char *argv[])
 					/* Affichage des requêtes clients */
 					printf("\n*******************\n");
 					printf("| Client request: |\n");
-					//printf("*******************\n");
-					printf("*******************\n%s", buffer);
-
+					printf("*******************\n");
 					t_request_ser	r_s;	
 					std::string client;
-					client.append(buffer);
-					pars_request(r_s, client);
+					// for (size_t i = 0; i < sizeof(buffer); i++)
+					// 	std::cout << buffer[i];
+		
+					
+					client.insert(client.size(), buffer, rc);
+					// pars_request(r_s, client);
 
-					std::string responseCGI = requestHandler(client);
+					std::cout << client << std::endl;
+					
 
 					if (rc == 0)
 					{
@@ -181,37 +184,38 @@ int main (int argc, char *argv[])
 						close_conn = TRUE;
 						break;
 					}
-					content_len = rc;
+					else{
+						std::string responseCGI = requestHandler(client);
+						printf("*******************\n");
+						printf("| Server respond: |\n");
+						printf("*******************\n");
+						//std::cout << page_upload << std::endl;
+						// if (r_s.route == "/favicon.ico")
+						// 	rc = send(fds[i].fd, NULL, 0, 0);
+						// else {
+							rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
+						// }
+						//
+						//      CCCCC    GGGGG    IIIII
+						//      C        G          I
+						//      C        G  GG      I
+						//      C        G   G      I
+						//      C        G   G      I
+						//      CCCCC    GGGGG    IIIII
+						//
 
-					printf("*******************\n");
-					printf("| Server respond: |\n");
-					printf("*******************\n");
-					//std::cout << page_upload << std::endl;
-					// if (r_s.route == "/favicon.ico")
-					// 	rc = send(fds[i].fd, NULL, 0, 0);
-					// else {
-						rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
-					// }
-					//
-					//      CCCCC    GGGGG    IIIII
-					//      C        G          I
-					//      C        G  GG      I
-					//      C        G   G      I
-					//      C        G   G      I
-					//      CCCCC    GGGGG    IIIII
-					//
+						// SEND(FDS[I].FD, STRING_CGI.C_STR(), STRING_CGI.SIZE(), 0);
 
-					// SEND(FDS[I].FD, STRING_CGI.C_STR(), STRING_CGI.SIZE(), 0);
-
-					//rc = send(fds[i].fd, buffer, content_len, 0);
-					if (rc < 0)
-					{
-						perror("  send() failed");
-						close_conn = TRUE;
-						break;
+						//rc = send(fds[i].fd, buffer, content_len, 0);
+						if (rc < 0)
+						{
+							perror("  send() failed");
+							close_conn = TRUE;
+							break;
+						}
+						//str = "\n";
+						//send(fds[i].fd, str, strcontent_len(str), 0);
 					}
-					//str = "\n";
-					//send(fds[i].fd, str, strcontent_len(str), 0);
 
 				} while(TRUE);
 
