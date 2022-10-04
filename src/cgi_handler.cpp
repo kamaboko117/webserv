@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/29 17:16:16 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/04 14:11:39 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,10 +157,11 @@ std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
 
     if (!outfile)
         return (errorPage(500));
+    std::cout << "body: " << req.getBody() << std::endl;
     outfile << req.getBody() << std::endl;
     outfile.close();
 
-    std::string ret = "HTTP/1.1 201\r\nLocation: ";
+    std::string ret = "HTTP/1.1 201\r\nContent-Length: 0\r\nLocation: ";
     ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
 
     return (ret);
@@ -171,7 +172,7 @@ std::string post(std::map<std::string, std::string> m_env, Request &req){
         return (uploadFile(m_env, req));
     }
 
-    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
     std::ifstream       f(m_env["PATH_TRANSLATED"].c_str());
 
 
@@ -185,7 +186,7 @@ std::string requestHandler(std::string strReq){
     std::string                         type;
     
     m_env = CGISetEnv(req);
-
+    
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(404);
     std::string extension = "";
