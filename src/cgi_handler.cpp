@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/04 14:11:39 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/06 15:27:45 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,12 @@
 #include "Request.hpp"
 #include "utils.hpp"
 #include "ft_itoa_string.hpp"
+#include "multipartReq.hpp"
 #define BUFFERSIZE 32
+
+bool        g_pending = false;
+std::string g_folder;
+// long        g_length;
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
 std::map<std::string, std::string> CGISetEnv(Request &req){
@@ -46,7 +51,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
       ret["REMOTE_HOST"] = "";
       ret["REMOTE_ADDR"] = ""; //==>conf
     //ret["AUTH_TYPE"] = "";
-    ret["CONTENT_TYPE"] = headers["CONTENT_TYPE"];
+    ret["CONTENT_TYPE"] = headers["Content-Type"];
     
     
     return(ret);
@@ -152,43 +157,93 @@ std::string transferFile(std::string type, std::string file){
     return (ret);
 }
 
-std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
-    std::ofstream outfile(m_env["PATH_TRANSLATED"].c_str());
+// std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
+//     //g_file = m_env["PATH_TRANSLATED"];
+//     // g_length = ft_stol(req.getHeaders()["Content-Length"]);
+    
+//     std::ofstream   outfile(m_env["PATH_TRANSLATED"].c_str());
+//     std::string     ret;
+    
+//     if (!outfile)
+//         return (errorPage(500));
+//     outfile << req.getBody() << std::endl;
+//     outfile.close();
+//     if (outfile.tellp() < g_length){
+//         ret = "HTTP/1.1 100\r\n";
+//         g_pending = true;
+//     }
+//     else{
+//         ret = "HTTP/1.1 201\r\n";
+//         g_pending = false;
+//     }
+//     ret += "Content-Length: 0\r\nLocation: ";
+//     ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
+//     std::cout << "inpending: " << g_pending << std::endl; 
+//     return (ret);
+// }
 
-    if (!outfile)
-        return (errorPage(500));
-    std::cout << "body: " << req.getBody() << std::endl;
-    outfile << req.getBody() << std::endl;
-    outfile.close();
-
-    std::string ret = "HTTP/1.1 201\r\nContent-Length: 0\r\nLocation: ";
-    ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
-
-    return (ret);
-}
-
-std::string post(std::map<std::string, std::string> m_env, Request &req){
-    if (!existsFile(m_env["PATH_TRANSLATED"])){
-        return (uploadFile(m_env, req));
+std::string continueUpload(std::string strReq){
+    std::string     ret = "HTTP/1.1 ";
+    MultipartReq    req(strReq.substr(strReq.find('\n') + 1, std::string::npos));
+    std::string     file = g_folder + "/" + req.getFilename();
+    std::ofstream   outfile(file.c_str());
+    std::string     boundary = strReq.substr(0, strReq.find("\r\n"));
+    std::size_t     pos = strReq.find("\r\n\r\n") + 4;
+    std::string     body = strReq.substr(pos, strReq.find(boundary, boundary.size()) - pos);
+    
+    outfile << body << std::endl;
+    if (strReq.substr(strReq.find(boundary, boundary.size()), std::string::npos) != "--"){
+        ret += "100\r\n";
+    } else {
+        ret += "201\r\nContent-Length: 0\r\nLocation: ";
+        ret +=  file + "\r\n\r\n";
+        g_pending = false;
     }
 
-    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
-    std::ifstream       f(m_env["PATH_TRANSLATED"].c_str());
-
-
-    // std::cout << "ret:\n" << ret << std::endl;
     return (ret);
 }
 
-std::string requestHandler(std::string strReq){
-    Request                             req(strReq);
+// std::string post(std::map<std::string, std::string> m_env, Request &req){
+//     //if (!existsFile(m_env["PATH_TRANSLATED"])){
+//         return (uploadFile(m_env, req));
+//     //}
+
+//     std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
+//     std::ifstream       f(m_env["PATH_TRANSLATED"].c_str());
+
+
+//     // std::cout << "ret:\n" << ret << std::endl;
+//     return (ret);
+// }
+
+std::string multipartHandler(std::map<std::string, std::string> m_env){
+    std::string     ret = "HTTP/1.1 ";
+
+    g_pending = true;
+    g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
+    ret += "100\r\n";
+
+    return (ret);
+}
+
+std::string requestHandler(std::string strReq){  
+    if (g_pending)
+        return (continueUpload(strReq));
+
     std::map<std::string, std::string>  m_env;
+    Request                             req(strReq);
     std::string                         type;
     
     m_env = CGISetEnv(req);
-    
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(404);
+    if (m_env["REQUEST_METHOD"] == "POST"){
+        
+        if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
+            return (multipartHandler(m_env));
+        // return (post(m_env, req));
+    }
+    
     std::string extension = "";
     if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
@@ -200,10 +255,6 @@ std::string requestHandler(std::string strReq){
         type = "video/mp4";
     else
         type = "text/plain";
-    if (m_env["REQUEST_METHOD"] == "POST")
-    {
-        return (post(m_env, req));
-    }
     
     return (transferFile(type, m_env["PATH_TRANSLATED"]));
 }
