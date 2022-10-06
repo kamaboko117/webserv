@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/29 15:49:33 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/05 17:01:01 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ Request::Request(const std::string req)
         if (_ret == 400 || line[i] == "\r" || line[i] == "")
             break;
         key = line[i].substr(0, line[i].find_first_of(':'));
-        value = line[i].substr(line[i].find_first_of(':'));
+        value = line[i].substr(line[i].find_first_of(':') + 2);
         if (_headers.count(key)) //if header is compatible
             _headers[key] = value;
     }
@@ -67,6 +67,7 @@ std::vector<std::string>    Request::reqSplit(std::string req){
         line.push_back(req.substr(0, pos));
         req.erase(0, pos + 1);
     }
+    line.push_back(req);
     return (line);
 }
 
@@ -127,14 +128,18 @@ void    Request::setPath(std::string req, std::size_t pos){
 }
 
 void    Request::setBody(std::size_t i, std::vector<std::string> line){
+    std::cout << "line[" << i + 1 << "]: " << line[i + 1] << std::endl;
     if (line[i] != "\r")
         return ;
     i++;
+    std::cout << "setting body" << std::endl;
     while (i < line.size() && line[i] != "\r"){
-        _body.append(line[i]);
-        _body.push_back('\n');
+        _body += (line[i]);
+        if (i + 1 != line.size())
+            _body.push_back('\n');
         i++;
     }
+    std::cout << "body: " << _body << std::endl;
 }
 
 std::string Request::getPath() const{
