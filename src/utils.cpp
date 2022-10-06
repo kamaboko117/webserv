@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 16:50:57 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/27 16:55:40 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/05 16:28:48 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,12 @@ bool existsFile (const std::string& name) {
 
 int ft_stoi(const std::string &s) {
     int i;
+    std::istringstream(s) >> i;
+    return i;
+}
+
+int ft_stol(const std::string &s) {
+    long i;
     std::istringstream(s) >> i;
     return i;
 }
