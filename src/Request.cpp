@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/05 17:01:01 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/06 15:30:14 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,18 +128,15 @@ void    Request::setPath(std::string req, std::size_t pos){
 }
 
 void    Request::setBody(std::size_t i, std::vector<std::string> line){
-    std::cout << "line[" << i + 1 << "]: " << line[i + 1] << std::endl;
     if (line[i] != "\r")
         return ;
     i++;
-    std::cout << "setting body" << std::endl;
     while (i < line.size() && line[i] != "\r"){
         _body += (line[i]);
         if (i + 1 != line.size())
             _body.push_back('\n');
         i++;
     }
-    std::cout << "body: " << _body << std::endl;
 }
 
 std::string Request::getPath() const{
