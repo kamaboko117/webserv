@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/06 15:27:45 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/10 18:03:45 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,9 @@
 #define BUFFERSIZE 32
 
 bool        g_pending = false;
-std::string g_folder;
-// long        g_length;
+std::string g_folder = "./home";
+std::string g_boundary;
+std::string g_file;
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
 std::map<std::string, std::string> CGISetEnv(Request &req){
@@ -184,19 +185,21 @@ std::string transferFile(std::string type, std::string file){
 
 std::string continueUpload(std::string strReq){
     std::string     ret = "HTTP/1.1 ";
-    MultipartReq    req(strReq.substr(strReq.find('\n') + 1, std::string::npos));
-    std::string     file = g_folder + "/" + req.getFilename();
-    std::ofstream   outfile(file.c_str());
-    std::string     boundary = strReq.substr(0, strReq.find("\r\n"));
-    std::size_t     pos = strReq.find("\r\n\r\n") + 4;
-    std::string     body = strReq.substr(pos, strReq.find(boundary, boundary.size()) - pos);
-    
+    std::size_t     pos = 0;
+    if (strReq.find(g_boundary) == 0){
+        MultipartReq    req(strReq.substr(strReq.find('\n') + 1, std::string::npos));
+        g_file = g_folder + "/" + req.getFilename();
+        pos = strReq.find("\r\n\r\n") + 4;
+    }
+    std::string     body = strReq.substr(pos, strReq.find(g_boundary, g_boundary.size()) - pos);
+    std::ofstream   outfile(g_file.c_str());
     outfile << body << std::endl;
-    if (strReq.substr(strReq.find(boundary, boundary.size()), std::string::npos) != "--"){
-        ret += "100\r\n";
+    pos = strReq.find(g_boundary + "--");
+    if (pos == std::string::npos){
+        ret += "100 Continue\r\n";
     } else {
         ret += "201\r\nContent-Length: 0\r\nLocation: ";
-        ret +=  file + "\r\n\r\n";
+        ret +=  g_file + "\r\n\r\n";
         g_pending = false;
     }
 
@@ -216,12 +219,14 @@ std::string continueUpload(std::string strReq){
 //     return (ret);
 // }
 
-std::string multipartHandler(std::map<std::string, std::string> m_env){
+std::string multipartHandler(Request &req){
     std::string     ret = "HTTP/1.1 ";
 
     g_pending = true;
-    g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
-    ret += "100\r\n";
+    std::string contentType = req.getHeaders()["Content-Type"];
+    g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
+    //g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
+    ret += "100 Continue\r\n";
 
     return (ret);
 }
@@ -240,7 +245,7 @@ std::string requestHandler(std::string strReq){
     if (m_env["REQUEST_METHOD"] == "POST"){
         
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
-            return (multipartHandler(m_env));
+            return (multipartHandler(req));
         // return (post(m_env, req));
     }
     
