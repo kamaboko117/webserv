@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/06 15:30:14 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/10 17:58:05 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,9 +63,9 @@ std::vector<std::string>    Request::reqSplit(std::string req){
     std::vector<std::string>    line;
     std::size_t                 pos = 0;
 
-    while ((pos = req.find('\n')) != std::string::npos){
+    while ((pos = req.find("\r\n")) != std::string::npos){
         line.push_back(req.substr(0, pos));
-        req.erase(0, pos + 1);
+        req.erase(0, pos + 2);
     }
     line.push_back(req);
     return (line);
