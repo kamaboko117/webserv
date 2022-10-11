@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/11 14:57:22 by dclark           ###   ########.fr       */
+/*   Updated: 2022/10/11 16:45:34 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,7 +200,7 @@ std::string continueUpload(std::string strReq){
 	if (!outfile) {
 		return (errorPage(500));
 	}
-    outfile << body << std::endl;
+    outfile << body;
     pos = strReq.find(g_boundary + "--");
     if (pos == std::string::npos){
         ret += "100 Continue\r\n";
