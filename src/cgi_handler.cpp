@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/11 14:01:29 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/11 14:33:55 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,6 +226,8 @@ std::string multipartHandler(Request &req){
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
     //g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
+    if (req.getBody() != "")
+        return (continueUpload(req.getBody()));
     ret += "100 Continue\r\n";
 
     return (ret);
