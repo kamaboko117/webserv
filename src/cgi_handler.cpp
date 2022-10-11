@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/10 18:03:45 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/11 14:01:29 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,7 @@ std::string continueUpload(std::string strReq){
     if (pos == std::string::npos){
         ret += "100 Continue\r\n";
     } else {
-        ret += "201\r\nContent-Length: 0\r\nLocation: ";
+        ret += "201\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nLocation: ";
         ret +=  g_file + "\r\n\r\n";
         g_pending = false;
     }
