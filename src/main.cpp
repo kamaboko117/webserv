@@ -79,7 +79,7 @@ int main (int argc, char *argv[])
 	int    new_sd = -1;
 	int    end_server = FALSE, compress_array = FALSE;
 	int    close_conn;
-	char   buffer[65535];
+	char   buffer[1048576];
 	int    timeout;
 
 	int    nfds = server_len, current_size = 0, i, j;
@@ -186,12 +186,15 @@ int main (int argc, char *argv[])
 					}
 					else{
 						std::string responseCGI = requestHandler(client);
+						
 						printf("*******************\n");
 						printf("| Server respond: |\n");
 						printf("*******************\n");
+						std::cout << responseCGI << std::endl;
 						//std::cout << page_upload << std::endl;
 						// if (r_s.route == "/favicon.ico")
 						// 	rc = send(fds[i].fd, NULL, 0, 0);
+						std::cout << "i: " << i << std::endl;
 						// else {
 							rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
 						// }
