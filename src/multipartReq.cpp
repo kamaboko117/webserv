@@ -32,7 +32,7 @@ MultipartReq::MultipartReq(std::string strReq){
         pos = _contentDisposition.find("name=");
         _name = _contentDisposition.substr(pos + 5, _contentDisposition.find(';', pos));
         pos = _contentDisposition.find("filename=");
-        _filename = _contentDisposition.substr(pos + 10, _contentDisposition.size() - (pos + 11));
+        _filename = _contentDisposition.substr(pos + 10, _contentDisposition.size() - (pos + 10 + 1));
     }
     _contentType = _headers["Content-Type"];
 }

@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/11 14:33:55 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/11 14:57:22 by dclark           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,13 +186,20 @@ std::string transferFile(std::string type, std::string file){
 std::string continueUpload(std::string strReq){
     std::string     ret = "HTTP/1.1 ";
     std::size_t     pos = 0;
+
     if (strReq.find(g_boundary) == 0){
         MultipartReq    req(strReq.substr(strReq.find('\n') + 1, std::string::npos));
         g_file = g_folder + "/" + req.getFilename();
         pos = strReq.find("\r\n\r\n") + 4;
     }
     std::string     body = strReq.substr(pos, strReq.find(g_boundary, g_boundary.size()) - pos);
-    std::ofstream   outfile(g_file.c_str());
+    if (body.find("\r\n", body.size() - 2) == body.size() - 2)
+        body.erase(body.find("EOF") + 3, 10);
+    std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
+	std::cout << "g_file = " << g_file << std::endl;
+	if (!outfile) {
+		return (errorPage(500));
+	}
     outfile << body << std::endl;
     pos = strReq.find(g_boundary + "--");
     if (pos == std::string::npos){
@@ -219,7 +226,7 @@ std::string continueUpload(std::string strReq){
 //     return (ret);
 // }
 
-std::string multipartHandler(Request &req){
+std::string multipartHandler(Request &req, std::string strReq){
     std::string     ret = "HTTP/1.1 ";
 
     g_pending = true;
@@ -227,7 +234,7 @@ std::string multipartHandler(Request &req){
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
     //g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
     if (req.getBody() != "")
-        return (continueUpload(req.getBody()));
+        return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
     ret += "100 Continue\r\n";
 
     return (ret);
@@ -247,7 +254,7 @@ std::string requestHandler(std::string strReq){
     if (m_env["REQUEST_METHOD"] == "POST"){
         
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
-            return (multipartHandler(req));
+            return (multipartHandler(req, strReq));
         // return (post(m_env, req));
     }
     

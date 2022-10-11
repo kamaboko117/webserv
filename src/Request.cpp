@@ -128,13 +128,13 @@ void    Request::setPath(std::string req, std::size_t pos){
 }
 
 void    Request::setBody(std::size_t i, std::vector<std::string> line){
-    if (line[i] != "\r")
+    if (line[i] != "")
         return ;
     i++;
-    while (i < line.size() && line[i] != "\r"){
+    while (i < line.size() && line[i] != ""){
         _body += (line[i]);
         if (i + 1 != line.size())
-            _body.push_back('\n');
+            _body += "\r\n";
         i++;
     }
 }
