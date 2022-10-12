@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/12 14:27:29 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/12 15:27:49 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,6 +204,7 @@ std::string continueUpload(std::string strReq){
     pos = strReq.find(g_boundary + "--");
     if (pos == std::string::npos){
         ret += "100 Continue\r\n";
+        return ("");
     } else {
         ret += "201\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nLocation: ";
         ret +=  g_file + "\r\n\r\n";
@@ -237,7 +238,8 @@ std::string multipartHandler(Request &req, std::string strReq){
         return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
     ret += "100 Continue\r\n";
 
-    return (ret);
+    //return (ret);
+    return ("");
 }
 
 std::string requestHandler(std::string strReq){  
