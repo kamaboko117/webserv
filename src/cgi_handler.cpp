@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/11 16:45:34 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/12 14:27:29 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,7 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
     char                                **env;
 
 
-    args[0] = (char *)"/usr/bin/php-cgi7.4";
+    args[0] = (char *)"/usr/bin/php-cgi";
     args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
     args[2] = NULL;
 
@@ -192,9 +192,9 @@ std::string continueUpload(std::string strReq){
         g_file = g_folder + "/" + req.getFilename();
         pos = strReq.find("\r\n\r\n") + 4;
     }
-    std::string     body = strReq.substr(pos, strReq.find(g_boundary, g_boundary.size()) - pos);
+    std::string     body = strReq.substr(pos, strReq.find(g_boundary, pos) - pos);
     if (body.find("\r\n", body.size() - 2) == body.size() - 2)
-        body.erase(body.find("EOF") + 3, 10);
+        body.erase(body.size() -2, 10);
     std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
 	std::cout << "g_file = " << g_file << std::endl;
 	if (!outfile) {
