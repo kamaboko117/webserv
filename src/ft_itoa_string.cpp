@@ -50,3 +50,17 @@ void	ft_itoa_string(int n, std::string &s)
 	alloc_dest(dest, nb, m_len - 2);
 	s.append(dest);
 }
+
+std::string	ft_itoa_string(int n)
+{
+	long	nb;
+	int		m_len;
+	char	dest[16];
+
+	memset(dest, 0, sizeof(dest));
+	nb = (long)n;
+	m_len = malloc_len(nb);
+	//dest[m_len - 1] = '\0';
+	alloc_dest(dest, nb, m_len - 2);
+	return (dest);
+}

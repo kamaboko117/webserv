@@ -4,6 +4,7 @@
 #include <string>
 #include <string.h>
 
-void    ft_itoa_string(int n, std::string &s);
+void        ft_itoa_string(int n, std::string &s);
+std::string ft_itoa_string(int n);
 
 #endif
