@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/12 16:49:56 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/12 18:15:02 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,6 +190,18 @@ std::string continueUpload(std::string strReq){
     if (strReq.find(g_boundary) == 0){
         MultipartReq    req(strReq.substr(strReq.find('\n') + 1, std::string::npos));
         g_file = g_folder + "/" + req.getFilename();
+        if (existsFile(g_file))
+        {
+            std::size_t i = 1;
+            std::string name = req.getFilename().substr(0, req.getFilename().find_last_of('.'));
+            std::string ext = "";
+            if (req.getFilename().find_last_of('.') != std::string::npos)
+                ext = req.getFilename().substr(req.getFilename().find_last_of('.'), std::string::npos);
+            while (existsFile(g_folder + "/" + name + " (" + ft_itoa_string(i) + ")" + ext))
+                i++;
+            g_file = g_folder + "/" + name  + " (" + ft_itoa_string(i) + ")" + ext;
+            std::cout << "name: " << name << " ext: " << ext << std::endl;
+        }
         pos = strReq.find("\r\n\r\n") + 4;
     }
     std::string     body = strReq.substr(pos, strReq.find(g_boundary, pos) - pos);
