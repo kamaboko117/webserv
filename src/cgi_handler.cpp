@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/12 15:27:49 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/12 16:49:56 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,6 +242,18 @@ std::string multipartHandler(Request &req, std::string strReq){
     return ("");
 }
 
+std::string deleteHandler(std::map<std::string, std::string> m_env){
+    std::string ret = "HTTP/1.1 ";
+
+    if (remove(m_env["PATH_TRANSLATED"].c_str()))
+        return (errorPage(403));
+    ret += " 200\r\nContent-Length: ";
+    std::string body = m_env["PATH_TRANSLATED"] + " succesfully deleted";
+    ft_itoa_string(body.size(), ret);
+    ret += "\r\nContent-Type: text/plain\r\n\r\n" + body + "\r\n";
+    return (ret);
+}
+
 std::string requestHandler(std::string strReq){  
     if (g_pending)
         return (continueUpload(strReq));
@@ -251,13 +263,16 @@ std::string requestHandler(std::string strReq){
     std::string                         type;
     
     m_env = CGISetEnv(req);
-    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
         return errorPage(404);
     if (m_env["REQUEST_METHOD"] == "POST"){
         
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
             return (multipartHandler(req, strReq));
         // return (post(m_env, req));
+    }
+    else if (m_env["REQUEST_METHOD"] == "DELETE"){
+        return (deleteHandler(m_env));
     }
     
     std::string extension = "";
