@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/12 18:15:02 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/17 15:44:20 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["REDIRECT_STATUS"] = "200";
 
     ret["SERVER_SOFTWARE"] = "webserv/1.0";
-      ret["SERVER_NAME"] = //missing ==> get from conf (t_location?)
+      ret["SERVER_NAME"] = "";//missing ==> get from conf (t_location?)
     ret["GATEWAY_INTERFACE"] = "CGI/1.1" ;
     
     ret["SERVER_PROTOCOL"] = "HTTP/1.1";
@@ -48,11 +48,13 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
         ret["PATH_INFO"] = "/home/form.html"; //conf
       ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
       ret["SCRIPT_NAME"] = ""; //missing ==> conf
-    ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
+    if (req.getPath().find('?') != std::string::npos)
+        ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
       ret["REMOTE_HOST"] = "";
       ret["REMOTE_ADDR"] = ""; //==>conf
     //ret["AUTH_TYPE"] = "";
     ret["CONTENT_TYPE"] = headers["Content-Type"];
+    ret["CONTENT_LENGTH"] = headers["Content-Length"];
     
     
     return(ret);
@@ -73,19 +75,18 @@ std::string errorPage(int code){
     return (ret);
 }
 
-std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location location)
+std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req)//, t_location location)
 {
-    int                                 fd[2];
-    pid_t                               cgiPID;
-    std::string                         cgiRet;
-    char                                buf[BUFFERSIZE];
-    char                                *args[3];
-    char                                **env;
-
+    int         fd[2];
+    pid_t       cgiPID;
+    std::string cgiRet;
+    char        buf[BUFFERSIZE];
+    char        *args[3];
+    char        **env;
+    FILE	    *fIn = tmpfile();
+    long	    fdIn = fileno(fIn);
 
     args[0] = (char *)"/usr/bin/php-cgi";
-    args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
-    args[2] = NULL;
 
     // for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
     //     std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
@@ -98,17 +99,29 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
         i++;
     }
     env[i] = NULL;
+
+    args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
+    if (m_env["CONTENT_TYPE"] == "application/x-www-form-urlencoded"){
+        write(fdIn, req.getBody().c_str(), req.getBody().size());
+	    lseek(fdIn, 0, SEEK_SET);
+    }
+    
+    args[2] = NULL;
     pipe(fd);
     if ((cgiPID = fork()) == 0)
     {
+        char * const * nll = NULL;
         close(STDOUT_FILENO);
         close(fd[0]);
         dup(fd[1]);
-        execve(args[0], args, env);
+        dup2(fdIn, STDIN_FILENO);
+        execve(args[0], nll, env);
     }
     else
     {
         wait(NULL);
+        if (req.getBody().size())
+            write(fd[1], req.getBody().c_str(), req.getBody().size());
         close(STDIN_FILENO);
         close(fd[1]);
         dup(fd[0]);
@@ -128,7 +141,8 @@ std::string cgiHandler(std::map<std::string, std::string> m_env)//, t_location l
 		delete[] env[i];
 	delete[] env;
     delete[] args[1];
-
+    fclose(fIn);
+    close(fdIn);
     std::string retBody = cgiRet.substr(cgiRet.find("\r\n\r\n") + 2, std::string::npos);
     std::string retHeader = cgiRet.substr(0, cgiRet.find("\r\n\r\n"));
     // std::cout << "retHeader:" << std::endl << retHeader << std::endl;
@@ -161,10 +175,10 @@ std::string transferFile(std::string type, std::string file){
 // std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
 //     //g_file = m_env["PATH_TRANSLATED"];
 //     // g_length = ft_stol(req.getHeaders()["Content-Length"]);
-    
+//    
 //     std::ofstream   outfile(m_env["PATH_TRANSLATED"].c_str());
 //     std::string     ret;
-    
+//    
 //     if (!outfile)
 //         return (errorPage(500));
 //     outfile << req.getBody() << std::endl;
@@ -230,11 +244,10 @@ std::string continueUpload(std::string strReq){
 //     //if (!existsFile(m_env["PATH_TRANSLATED"])){
 //         return (uploadFile(m_env, req));
 //     //}
-
+//
 //     std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
-//     std::ifstream       f(m_env["PATH_TRANSLATED"].c_str());
-
-
+//     std::ifstream       f(m_env["PATH_TRANSLATED"].c_str())
+//
 //     // std::cout << "ret:\n" << ret << std::endl;
 //     return (ret);
 // }
@@ -275,10 +288,17 @@ std::string requestHandler(std::string strReq){
     std::string                         type;
     
     m_env = CGISetEnv(req);
+
+    std::string extension = "";
+    if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
+        extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
+    
+    if (extension == ".php" || extension == ".html")
+        return (cgiHandler(m_env, req));
+
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
         return errorPage(404);
     if (m_env["REQUEST_METHOD"] == "POST"){
-        
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
             return (multipartHandler(req, strReq));
         // return (post(m_env, req));
@@ -286,12 +306,7 @@ std::string requestHandler(std::string strReq){
     else if (m_env["REQUEST_METHOD"] == "DELETE"){
         return (deleteHandler(m_env));
     }
-    
-    std::string extension = "";
-    if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
-        extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
-    if ( extension == ".php" || extension == ".html")
-        return (cgiHandler(m_env));
+
     else if (extension == ".ico")
         type = "images/x-icon";
     else if (extension == ".mp4")
