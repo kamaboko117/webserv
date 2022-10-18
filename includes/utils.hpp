@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 16:52:42 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/05 16:29:47 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/18 17:05:51 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,5 +18,6 @@ bool    existsFile (const std::string &);
 int     ft_stoi(const std::string &);
 long    ft_stol(const std::string &);
 char    *ft_strdupcpp(const char *);
+int     isDirectory(const std::string &);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/18 15:03:20 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/18 17:16:03 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -316,6 +316,12 @@ std::string deleteHandler(std::map<std::string, std::string> m_env){
     return (ret);
 }
 
+std::string autoindex(std::string path, std::map<std::string, std::string> m_env){
+    m_env["QUERY_STRING"] = "PATH=" + path;
+    m_env["PATH_TRANSLATED"] = "./autoindex.php";
+    return (executeCGI(m_env, ""));
+}
+
 std::string requestHandler(std::string strReq){  
     if (g_pending)
         return (continueUpload(strReq));
@@ -337,6 +343,8 @@ std::string requestHandler(std::string strReq){
 
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
         return errorPage(404);
+    if (isDirectory(m_env["PATH_TRANSLATED"])) //&& autoindex is on
+        return (autoindex(m_env["PATH_TRANSLATED"], m_env));
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
             return (multipartHandler(req, strReq));

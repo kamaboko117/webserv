@@ -6,17 +6,25 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 16:50:57 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/05 16:28:48 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/18 17:05:36 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h>
 
 bool existsFile (const std::string& name) {
     std::ifstream f(name.c_str());
     return f.good();
+}
+
+int isDirectory(const std::string &path) {
+   struct stat statbuf;
+   if (stat(path.c_str(), &statbuf) != 0)
+       return 0;
+   return S_ISDIR(statbuf.st_mode);
 }
 
 int ft_stoi(const std::string &s) {
