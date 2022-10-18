@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/18 14:39:43 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/18 15:03:20 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,8 +113,7 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
         close(STDOUT_FILENO);
         close(fd[0]);
         dup(fd[1]);
-        if (fdIn != -1)
-            dup2(fdIn, STDIN_FILENO);
+        dup2(fdIn, STDIN_FILENO);
         execve(args[0], nll, env);
     }
     else
@@ -139,10 +138,8 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
 		delete[] env[i];
 	delete[] env;
     delete[] args[1];
-    if (fIn){
-        fclose(fIn);
-        close(fdIn);
-    }
+    fclose(fIn);
+    close(fdIn);
     std::string retBody = cgiRet.substr(cgiRet.find("\r\n\r\n") + 2, std::string::npos);
     std::string retHeader = cgiRet.substr(0, cgiRet.find("\r\n\r\n"));
     // std::cout << "retHeader:" << std::endl << retHeader << std::endl;
@@ -236,8 +233,6 @@ std::string transferFile(std::string type, std::string file){
 //     std::cout << "inpending: " << g_pending << std::endl; 
 //     return (ret);
 // }
-
-
 
 std::string continueUpload(std::string strReq){
     std::string     ret = "HTTP/1.1 ";
