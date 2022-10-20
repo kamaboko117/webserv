@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/18 17:16:03 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/10/20 14:26:03 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     ret["REQUEST_METHOD"] = req.getMethod();
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
-        ret["PATH_INFO"] = "/home/form.html"; //conf
+        ret["PATH_INFO"] = ""; //conf
       ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
       ret["SCRIPT_NAME"] = ""; //missing ==> conf
     if (req.getPath().find('?') != std::string::npos)
@@ -114,6 +114,7 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
         close(fd[0]);
         dup(fd[1]);
         dup2(fdIn, STDIN_FILENO);
+        chdir(m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of("/"), 0).c_str());
         execve(args[0], nll, env);
     }
     else
@@ -343,7 +344,9 @@ std::string requestHandler(std::string strReq){
 
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
         return errorPage(404);
-    if (isDirectory(m_env["PATH_TRANSLATED"])) //&& autoindex is on
+    if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
+        return errorPage(403);
+    if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST") //&& autoindex is on
         return (autoindex(m_env["PATH_TRANSLATED"], m_env));
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
