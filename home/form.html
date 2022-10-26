@@ -7,8 +7,12 @@
 		CGI fonctionnent avec Apache.</p>
 		<p>Elle contient donc un formulaire r&eacute;duit &agrave; un bouton Valider ;
 		lorsqu'on clique sur le bouton, le script test.cgi doit s'ex&eacute;cuter.</p>
-		<form action="cgi-bin/test.cgi" method="get">
+		<form action="cgi-bin/hello.php" method="get">
 			<input type="submit" value="Valider">
+		</form>
+		<form action="/username.php" method="post">
+			<input name="USER" value=""/>
+			<button name="foo" value="upvote" type="submit">Upvote</button>
 		</form>
 	</body>
 </html>
