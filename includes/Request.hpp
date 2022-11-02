@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:03:50 by asaboure          #+#    #+#             */
-/*   Updated: 2022/09/29 15:50:05 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/02 15:50:15 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ private:
     std::string                         _body;
     std::map<std::string, std::string>  _headers;
     int                                 _ret;
+
 public:
     Request(const std::string req);
     virtual ~Request();
@@ -47,6 +48,7 @@ public:
     std::map<std::string, std::string>  getHeaders() const;
     std::string                         getMethod() const;
     std::string                         getBody() const;
+    int                                 getRet() const;
 };
 
 #endif
