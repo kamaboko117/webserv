@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/10 17:58:05 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/02 15:52:19 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,4 +153,8 @@ std::string Request::getMethod() const{
 
 std::string Request::getBody() const{
     return (_body);
+}
+
+int Request::getRet() const{
+    return (_ret);
 }
