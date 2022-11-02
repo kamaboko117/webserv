@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/20 14:26:03 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/02 16:03:11 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,10 +70,10 @@ std::string errorPage(int code){
 
     ft_itoa_string(code, ret);
     ft_itoa_string(code, body);
+    body += "\r\n";
     ret += "\r\nContent-Type: text/plain\r\nContent-Length: ";
     ft_itoa_string(body.length(), ret);
     ret += "\r\n\r\n";
-    ft_itoa_string(code, body);
     ret += body;
 
     return (ret);
@@ -333,6 +333,9 @@ std::string requestHandler(std::string strReq){
     Request                             req(strReq);
     std::string                         type;
     
+    if(req.getRet() != 200)
+        return (errorPage(req.getRet()));
+
     m_env = CGISetEnv(req);
 
     std::string extension = "";
