@@ -19,6 +19,7 @@
 #include "ft_itoa_string.hpp"
 #include <vector>
 #include "cgi_handler.hpp"
+#include "utils.hpp"
 
 #define SERVER_PORT1	12345
 #define SERVER_PORT2	8080
@@ -28,8 +29,8 @@
 
 int	check_init_sock(int comp, std::vector<cfg::Server> s, int server_len) {
 	for (int i = 0; i < server_len; i++) {
-		if (comp == s[i].getSocket())
-			return (s[i].getSocket());
+		if (comp == s[i]._socket)
+			return (s[i]._socket);
 	}
 	return (-1);
 }
@@ -47,13 +48,18 @@ int main (int argc, char *argv[])
 	std::string page_upload;
 
 	std::vector<cfg::Server>	server_list;
+	try {
+		server_list = getServers(argv[1]);
+	} catch (std::exception &error) {
+		std::cout << "Error: " << error.what() << std::endl;
+	}
 	cfg::Server					s1;
 	cfg::Server					s2;
 	cfg::Server					s3;
 
-	s1.setListen(8080);
-	s2.setListen(5050);
-	s3.setListen(12345);
+	s1._listen =8080;
+	s2._listen =5050;
+	s3._listen =12345;
 
 	server_list.push_back(s1);
 	server_list.push_back(s2);
@@ -66,7 +72,7 @@ int main (int argc, char *argv[])
 	for (size_t i = 0; i < server_list.size(); i++) {
 		if (create_socket(server_list[i]) != -1) {
 			len++;
-			fds[i].fd = server_list[i].getSocket();
+			fds[i].fd = server_list[i]._socket;
 			fds[i].events = POLLIN;
 		}
 	}

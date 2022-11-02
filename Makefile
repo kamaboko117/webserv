@@ -1,31 +1,61 @@
-SRCS	=	Server.cpp \
-			configuration_file_parser.cpp
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2022/09/14 13:32:51 by dclark            #+#    #+#              #
+#    Updated: 2022/10/26 14:10:04 by asaboure         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-INC		=	./
-
-NAME	=	cfg_file_parser
-
-OBJS	=	$(SRCS:.cpp=.o)
-
-CPPFLAGS	+= std=c++98 -Wall -Wextra -Werror -g
-
+IDIR	=	./includes
 CC		=	c++
+CFLAGS	=	-Wall -Werror -Wextra -std=c++98 -I$(IDIR) -g
+
+ODIR	=	./.obj
+SDIR	=	./src
+
+NAME	=	webserv
+
+_DEPS	=	Create_socket.hpp \
+			ft_itoa_string.hpp \
+			request_client.hpp \
+			Server.hpp \
+			cgi_handler.hpp \
+			Request.hpp \
+			utils.hpp \
+			multipartReq.hpp
+
+DEPS	=	$(patsubst %,$(IDIR)/%,$(_DEPS))
+
+_OBJ	=	main.o \
+			Create_socket.o \
+			ft_itoa_string.o \
+			request_client.o \
+			cgi_handler.o \
+			Request.o \
+			utils.o \
+			multipartReq.o \
+			configuration_file_parser.o
+
+OBJ		=	$(patsubst %,$(ODIR)/%,$(_OBJ))
+
+$(ODIR)/%.o: $(SDIR)/%.cpp $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 all:	$(NAME)
 
+$(NAME): $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
+
 clean:
-	rm -f $(OBJS)
+	rm -f $(ODIR)/*.o
 
 fclean:	clean
 	rm -f $(NAME)
 
-re:		fclean
-	@make
+re: fclean $(NAME)
 
-%.o : %.cpp
-	@$(CC) $(CPPFLAGS) -I $(INC) -o $@ -c $<
-
-$(NAME): $(OBJS)
-	@$(CC) $(CPPFLAGS) -I $(INC) $(OBJS) -o $(NAME)
-
-.PHONY: all clean fclean re remove
+.PHONY: all clean fclean re

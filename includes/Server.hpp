@@ -8,36 +8,32 @@
 
 namespace cfg
 {
+	typedef struct						s_location
+	{
+		std::string								_location;
+		std::vector<std::string>				_allow;
+		std::pair<int, std::string>				_return;
+		std::string								_root;
+		bool									_autoindex;
+		std::vector<std::string>				_index;
+		std::map<std::string, std::string>		_cgi_pass;
+		std::string								_upload_store;
+	}									t_location;
+
 	class Server
 	{
-	public :
+		public:
 
-		typedef std::vector<std::map< std::string, std::vector< std::string> > >	t_location;
+			int																	_socket;
+			size_t																_listen;
+			size_t																_client_max_body_size;
+			std::vector<std::string>											_server_name;
+			std::map<int, std::string>								_error_page;
+			std::vector<t_location>												_locations;
 
-	private:
-
-		std::string															_server_name;
-		int																	_listen;
-		t_location															_location;
-		int																	_socket;
-
-	public:
-
-		//	Constructor and destructor
-		Server();
-		~Server();
-
-		//	Getters
-		std::string												getServerName(void);
-		int														getListen(void);
-		t_location												getLocation(void);
-		int														getSocket(void);
-
-		//	Setters
-		void													setServerName(std::string server_name);
-		void													setListen(int listen);
-		void													setLocation(t_location location);
-		void													setSocket(int socket);
+			//	Constructor and destructor
+			Server() : _client_max_body_size(0) {};
+			~Server() {};
 	};
 }
 
