@@ -52,18 +52,8 @@ int main (int argc, char *argv[])
 		server_list = getServers(argv[1]);
 	} catch (std::exception &error) {
 		std::cout << "Error: " << error.what() << std::endl;
+		return (-1);
 	}
-	cfg::Server					s1;
-	cfg::Server					s2;
-	cfg::Server					s3;
-
-	s1._listen =8080;
-	s2._listen =5050;
-	s3._listen =12345;
-
-	server_list.push_back(s1);
-	server_list.push_back(s2);
-	server_list.push_back(s3);
 
 	struct pollfd fds[server_list.size() * 10];
 	memset(fds, 0, sizeof(fds));
@@ -86,11 +76,7 @@ int main (int argc, char *argv[])
 	int    end_server = FALSE, compress_array = FALSE;
 	int    close_conn;
 	char   buffer[1048576];
-	int    timeout;
-
 	int    nfds = server_len, current_size = 0, i, j;
-
-	timeout = -1;
 
 	do
 	{
