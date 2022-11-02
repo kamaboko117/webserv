@@ -14,7 +14,6 @@
 #include <fstream>
 #include <cstdlib>
 #include "Server.hpp"
-#include <request_client.hpp>
 #include "Create_socket.hpp"
 #include "ft_itoa_string.hpp"
 #include <vector>
@@ -158,7 +157,6 @@ int main (int argc, char *argv[])
 					printf("\n*******************\n");
 					printf("| Client request: |\n");
 					printf("*******************\n");
-					t_request_ser	r_s;	
 					std::string client;
 					// for (size_t i = 0; i < sizeof(buffer); i++)
 					// 	std::cout << buffer[i];

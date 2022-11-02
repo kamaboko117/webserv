@@ -6,7 +6,7 @@
 #    By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/09/14 13:32:51 by dclark            #+#    #+#              #
-#    Updated: 2022/10/26 14:10:04 by asaboure         ###   ########.fr        #
+#    Updated: 2022/11/02 15:15:01 by asaboure         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,6 @@ NAME	=	webserv
 
 _DEPS	=	Create_socket.hpp \
 			ft_itoa_string.hpp \
-			request_client.hpp \
 			Server.hpp \
 			cgi_handler.hpp \
 			Request.hpp \
@@ -33,7 +32,6 @@ DEPS	=	$(patsubst %,$(IDIR)/%,$(_DEPS))
 _OBJ	=	main.o \
 			Create_socket.o \
 			ft_itoa_string.o \
-			request_client.o \
 			cgi_handler.o \
 			Request.o \
 			utils.o \
