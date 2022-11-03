@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 16:50:57 by asaboure          #+#    #+#             */
-/*   Updated: 2022/10/20 13:47:52 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/03 17:14:55 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <vector>
+#include "Server.hpp"
 
 bool canRead(const std::string &name){
     return !access(name.c_str(), R_OK);
@@ -57,4 +59,22 @@ char    *ft_strdupcpp(const char *src){
     }
     ret[i] = '\0';
     return(ret);
+}
+
+std::vector<cfg::t_location>::iterator        closestMatchingLocation(cfg::Server &server, std::string path)
+{
+    for (std::vector<cfg::t_location>::iterator it = server._locations.begin();
+            it != server._locations.end(); ++it)
+        if (it->_location == path)
+            return it;
+    for (size_t i = path.length(); i > 0; --i)
+    {
+        for (std::vector<cfg::t_location>::iterator it = server._locations.begin();
+            it != server._locations.end(); ++it)
+        {
+            if (it->_location == path.substr(0, i))
+                return it;
+        }
+    }
+    return server._locations.end();
 }

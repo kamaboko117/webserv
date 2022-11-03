@@ -175,7 +175,7 @@ int main (int argc, char *argv[])
 						break;
 					}
 					else{
-						std::string responseCGI = requestHandler(client);
+						std::string responseCGI = requestHandler(client, server_list[0]);
 						
 						printf("*******************\n");
 						printf("| Server respond: |\n");

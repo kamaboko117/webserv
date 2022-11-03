@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/02 16:03:11 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/03 17:20:36 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -323,18 +323,21 @@ std::string autoindex(std::string path, std::map<std::string, std::string> m_env
     return (executeCGI(m_env, ""));
 }
 
-std::string requestHandler(std::string strReq){  
+std::string requestHandler(std::string strReq, cfg::Server server){  
     if (g_pending)
         return (continueUpload(strReq));
     if (g_cgipending)
         return (continueCGIUpload(strReq));
-
+    
     std::map<std::string, std::string>  m_env;
     Request                             req(strReq);
     std::string                         type;
     
     if(req.getRet() != 200)
         return (errorPage(req.getRet()));
+    std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
+    if (it == server._locations.end())
+        return (errorPage(404));
 
     m_env = CGISetEnv(req);
 
