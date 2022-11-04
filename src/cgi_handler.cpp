@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/04 15:23:43 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/04 16:44:36 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,24 +35,27 @@ std::string g_body;
 std::map<std::string, std::string> g_m_env;
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
-std::map<std::string, std::string> CGISetEnv(Request &req){
+std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, cfg::t_location location, std::string extension){
     std::map<std::string, std::string> ret;
     std::map<std::string, std::string> headers = req.getHeaders();
-    
+    std::stringstream   ss;
+    (void)location;
+    (void)extension;
     ret["REDIRECT_STATUS"] = "200";
 
     ret["SERVER_SOFTWARE"] = "webserv/1.0";
-      ret["SERVER_NAME"] = "";//missing ==> get from conf (t_location?)
+    ret["SERVER_NAME"] = server._server_name[0];
     ret["GATEWAY_INTERFACE"] = "CGI/1.1" ;
     
     ret["SERVER_PROTOCOL"] = "HTTP/1.1";
-      ret["SERVER_PORT"] = ""; //missing ==> get from conf
+    ss << server._listen;
+    ret["SERVER_PORT"] = ss.str();
     ret["REQUEST_METHOD"] = req.getMethod();
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
-        ret["PATH_INFO"] = ""; //conf
-      ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
-      ret["SCRIPT_NAME"] = ""; //missing ==> conf
+        ret["PATH_INFO"] = "";
+    ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
+      ret["SCRIPT_NAME"] = "";//location._cgi_pass[extension]; //missing ==> conf
     if (req.getPath().find('?') != std::string::npos)
         ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
       ret["REMOTE_HOST"] = "";
@@ -60,7 +63,6 @@ std::map<std::string, std::string> CGISetEnv(Request &req){
     //ret["AUTH_TYPE"] = "";
     ret["CONTENT_TYPE"] = headers["Content-Type"];
     ret["CONTENT_LENGTH"] = headers["Content-Length"];
-    
     
     return(ret);
 }
@@ -319,9 +321,20 @@ std::string deleteHandler(std::map<std::string, std::string> m_env){
 }
 
 std::string autoindex(std::string path, std::map<std::string, std::string> m_env){
+    std::cout << "*************POUET*************" << std::endl;
     m_env["QUERY_STRING"] = "PATH=" + path;
     m_env["PATH_TRANSLATED"] = "./autoindex.php";
     return (executeCGI(m_env, ""));
+}
+
+std::string getValidIndex(std::vector<std::string> indexes){
+    for (size_t i = 0; i < indexes.size(); i++)
+    {
+        if (existsFile(indexes[i]) && canRead(indexes[i]))
+            return indexes[i];
+    }
+    return ("");
+    
 }
 
 std::string requestHandler(std::string strReq, cfg::Server server){  
@@ -342,12 +355,12 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
         return (errorPage(405));
 
-    m_env = CGISetEnv(req);
-
     std::string extension = "";
     if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
     
+    m_env = CGISetEnv(req, server, *it, extension);
+std::cout << "*************POUET*************" << std::endl;
     if (extension == ".php" || extension == ".html")
         return (cgiHandler(m_env, req, strReq));
 
@@ -355,8 +368,17 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         return errorPage(404);
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(403);
-    if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && it->_autoindex)
-        return (autoindex(m_env["PATH_TRANSLATED"], m_env));
+    if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
+        std::cout << "*************PT*************" << std::endl;
+        std::cout << it->_autoindex << std::endl;
+        if (it->_autoindex)
+            return (autoindex(m_env["PATH_TRANSLATED"], m_env));
+        if (!it->_index.size())
+            return (errorPage(404));
+        m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
+        if (m_env["PATH_TRANSLATED"] == "")
+            return (errorPage(404));
+    }
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
             return (multipartHandler(req, strReq));
