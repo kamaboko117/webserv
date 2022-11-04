@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/03 17:20:36 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/04 14:22:15 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include "utils.hpp"
 #include "ft_itoa_string.hpp"
 #include "multipartReq.hpp"
+#include <algorithm>
 #define BUFFERSIZE 32
 
 bool        g_pending = false;
@@ -338,6 +339,8 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
     if (it == server._locations.end())
         return (errorPage(404));
+    if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
+        return (errorPage(405));
 
     m_env = CGISetEnv(req);
 
