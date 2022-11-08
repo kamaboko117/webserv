@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 13:17:01 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 14:08:50 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,12 +35,11 @@ std::string g_body;
 std::map<std::string, std::string> g_m_env;
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
-std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, cfg::t_location location, std::string extension){
+std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, cfg::t_location location){
     std::map<std::string, std::string> ret;
     std::map<std::string, std::string> headers = req.getHeaders();
     std::stringstream   ss;
-    (void)location;
-    (void)extension;
+    std::string         extension = "";
     ret["REDIRECT_STATUS"] = "200";
 
     ret["SERVER_SOFTWARE"] = "webserv/1.0";
@@ -55,7 +54,9 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     if (ret["PATH_INFO"] == "/")
         ret["PATH_INFO"] = "";
     ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
-      ret["SCRIPT_NAME"] = "";//location._cgi_pass[extension]; //missing ==> conf
+    if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+        extension = ret["PATH_TRANSLATED"].substr(ret["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+    ret["SCRIPT_NAME"] = location._cgi_pass[extension];
     if (req.getPath().find('?') != std::string::npos)
         ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
       ret["REMOTE_HOST"] = "";
@@ -63,7 +64,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     //ret["AUTH_TYPE"] = "";
     ret["CONTENT_TYPE"] = headers["Content-Type"];
     ret["CONTENT_LENGTH"] = headers["Content-Length"];
-    
+
     return(ret);
 }
 
@@ -184,7 +185,6 @@ std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, s
     // for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
     //     std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
 
-    std::cout << "ENV: " << m_env["CONTENT_TYPE"] << std::endl;
     if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data"){
         g_cgipending = true;
         g_head = strReq;
@@ -354,11 +354,11 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         return (errorPage(405));
 
     std::string extension = "";
-    if (m_env["PATH_INFO"].find_last_of('.') != std::string::npos)
-        extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
+    m_env = CGISetEnv(req, server, *it);
     
-    m_env = CGISetEnv(req, server, *it, extension);
-    if (extension == ".php" || extension == ".html")
+    if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+        extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+    if ((extension == ".php" || extension == ".html") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq));
 
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
@@ -382,13 +382,13 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     else if (m_env["REQUEST_METHOD"] == "DELETE"){
         return (deleteHandler(m_env));
     }
-
     else if (extension == ".ico")
         type = "images/x-icon";
     else if (extension == ".mp4")
         type = "video/mp4";
+    else if (extension == ".html")
+        type = "text/html";
     else
         type = "text/plain";
-    
     return (transferFile(type, m_env["PATH_TRANSLATED"]));
 }
