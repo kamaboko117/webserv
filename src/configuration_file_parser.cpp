@@ -362,8 +362,8 @@ void					getUploadStore
 	++pos;
 	if (pos == end)
 		throw ParseError();
-	if (!isDirectory(*pos))
-		throw ParseError();
+	// if (!isDirectory(*pos))
+	// 	throw ParseError();
 	server.back()._locations.back()._upload_store = *pos;
 	++pos;
 }
