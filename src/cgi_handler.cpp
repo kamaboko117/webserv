@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 14:58:49 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 15:15:46 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -254,13 +254,13 @@ std::string continueUpload(std::string strReq){
     return (ret);
 }
 
-std::string multipartHandler(Request &req, std::string strReq){
+std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location){
     std::string     ret = "HTTP/1.1 ";
 
     g_pending = true;
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
-    //g_folder = m_env["PATH_TRANSLATED"]; // check if this is a directory
+    g_folder = location._upload_store; // check if this is a directory
     if (req.getBody() != "")
         return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
     ret += "100 Continue\r\n";
@@ -323,6 +323,30 @@ std::string getValidIndex(std::vector<std::string> indexes){
     return ("");
 }
 
+std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::t_location location){
+    g_file = location._upload_store;
+    long length = ft_stol(req.getHeaders()["Content-Length"]);
+   
+    std::ofstream   outfile(m_env["PATH_TRANSLATED"].c_str());
+    std::string     ret;
+   
+    if (!outfile)
+        return (errorPage(500));
+    outfile << req.getBody() << std::endl;
+    outfile.close();
+    if (outfile.tellp() < length){
+        ret = "HTTP/1.1 100\r\n";
+        g_pending = true;
+    }
+    else{
+        ret = "HTTP/1.1 201\r\n";
+        g_pending = false;
+    }
+    ret += "Content-Length: 0\r\nLocation: ";
+    ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
+    return (ret);
+}
+
 std::string requestHandler(std::string strReq, cfg::Server server){  
     if (g_pending)
         return (continueUpload(strReq));
@@ -364,8 +388,8 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     }
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
-            return (multipartHandler(req, strReq));
-        // return (post(m_env, req));
+            return (multipartHandler(req, strReq, *it));
+        return (uploadFile(m_env, req, *it));
     }
     else if (m_env["REQUEST_METHOD"] == "DELETE"){
         return (deleteHandler(m_env));
