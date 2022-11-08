@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 14:35:16 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 14:58:49 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include "ft_itoa_string.hpp"
 #include "multipartReq.hpp"
 #include <algorithm>
+#include <dirent.h>
 #define BUFFERSIZE 32
 
 bool        g_pending = false;
@@ -280,10 +281,37 @@ std::string deleteHandler(std::map<std::string, std::string> m_env){
     return (ret);
 }
 
-std::string autoindex(std::string path, std::map<std::string, std::string> m_env){
-    m_env["QUERY_STRING"] = "PATH=" + path;
-    m_env["PATH_TRANSLATED"] = "./autoindex.php";
-    return (executeCGI(m_env, ""));
+std::string        autoindex(char const *dir_path)
+{
+    DIR                    *dh;
+    struct dirent        *contents;
+    std::string             head = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::string            autoindex;
+
+    dh = opendir(dir_path);
+    if (!dh)
+        return std::string("<body>dir_path not found !</body>");
+    autoindex.append("<body><ul>");
+    autoindex.append("<li><a href=\"/.\">.</li>");
+    autoindex.append("<li><a href=\"/..\">..</li>");
+    while ((contents = readdir(dh)) != NULL)
+    {
+        if (std::string(contents->d_name) != "." && std::string(contents->d_name) != "..")
+        {
+            autoindex.append("<li><a href=\"");
+            autoindex.append(dir_path);
+            if (*autoindex.rbegin() != '/')
+                autoindex.append("/");
+            autoindex.append(contents->d_name);
+            autoindex.append("\">");
+            autoindex.append(contents->d_name);
+            autoindex.append("</li>");
+        }
+    }
+    autoindex.append("</body></ul>");
+    closedir(dh);
+    ft_itoa_string(autoindex.length(), head);
+    return (head + "\r\n\r\n" + autoindex);
 }
 
 std::string getValidIndex(std::vector<std::string> indexes){
@@ -327,7 +355,7 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         return errorPage(403);
     if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
         if (it->_autoindex)
-            return (autoindex(m_env["PATH_TRANSLATED"], m_env));
+            return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
         if (!it->_index.size())
             return (errorPage(404));
         m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
