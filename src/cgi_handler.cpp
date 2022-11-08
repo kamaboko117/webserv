@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 14:08:50 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 14:35:16 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
     std::string cgiRet;
     char        buf[BUFFERSIZE];
     
-    args[0] = (char *)"/usr/bin/php-cgi";
+    args[0] = ft_strdupcpp(m_env["SCRIPT_NAME"].c_str());
     args[1] = ft_strdupcpp(m_env["PATH_TRANSLATED"].c_str());
     
     char **env = new char*[m_env.size() + 1];
@@ -120,10 +120,13 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
         dup2(fdIn, STDIN_FILENO);
         chdir(m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of("/"), 0).c_str());
         execve(args[0], nll, env);
+        std::cerr << "Execve crashed." << std::endl;
+        write(fd[1], "Status: 500\r\n\r\n", 15);
+        exit (0);
     }
     else
     {
-        wait(NULL);
+        waitpid(cgiPID, NULL, 0);
         close(STDIN_FILENO);
         close(fd[1]);
         dup(fd[0]);
@@ -142,12 +145,12 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
     for (size_t i = 0; env[i]; i++)
 		delete[] env[i];
 	delete[] env;
+    delete[] args[0];
     delete[] args[1];
     fclose(fIn);
     close(fdIn);
     std::string retBody = cgiRet.substr(cgiRet.find("\r\n\r\n") + 2, std::string::npos);
     std::string retHeader = cgiRet.substr(0, cgiRet.find("\r\n\r\n"));
-    // std::cout << "retHeader:" << std::endl << retHeader << std::endl;
     std::string ret = "HTTP/1.1 200 OK\nContent-Length: ";
     ft_itoa_string(retBody.size(), ret);
     
@@ -180,11 +183,8 @@ std::string continueCGIUpload(std::string strReq){
     return (g_body);
 }
 
-std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq)//, t_location location)
+std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq)
 {
-    // for (std::map<std::string, std::string>::iterator it = m_env.begin(); it != m_env.end(); it++)
-    //     std::cout << "key: " << it->first << " | value: " << it->second << std::endl;
-
     if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data"){
         g_cgipending = true;
         g_head = strReq;
@@ -209,34 +209,8 @@ std::string transferFile(std::string type, std::string file){
     ret += "\r\n\r\n";
     ret += ss.str();
 
-    // std::cout << "ret:\n" << ret << std::endl;
     return (ret);
 }
-
-// std::string uploadFile(std::map<std::string, std::string> m_env, Request &req){
-//     //g_file = m_env["PATH_TRANSLATED"];
-//     // g_length = ft_stol(req.getHeaders()["Content-Length"]);
-//    
-//     std::ofstream   outfile(m_env["PATH_TRANSLATED"].c_str());
-//     std::string     ret;
-//    
-//     if (!outfile)
-//         return (errorPage(500));
-//     outfile << req.getBody() << std::endl;
-//     outfile.close();
-//     if (outfile.tellp() < g_length){
-//         ret = "HTTP/1.1 100\r\n";
-//         g_pending = true;
-//     }
-//     else{
-//         ret = "HTTP/1.1 201\r\n";
-//         g_pending = false;
-//     }
-//     ret += "Content-Length: 0\r\nLocation: ";
-//     ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
-//     std::cout << "inpending: " << g_pending << std::endl; 
-//     return (ret);
-// }
 
 std::string continueUpload(std::string strReq){
     std::string     ret = "HTTP/1.1 ";
@@ -255,7 +229,6 @@ std::string continueUpload(std::string strReq){
             while (existsFile(g_folder + "/" + name + " (" + ft_itoa_string(i) + ")" + ext))
                 i++;
             g_file = g_folder + "/" + name  + " (" + ft_itoa_string(i) + ")" + ext;
-            std::cout << "name: " << name << " ext: " << ext << std::endl;
         }
         pos = strReq.find("\r\n\r\n") + 4;
     }
@@ -263,7 +236,6 @@ std::string continueUpload(std::string strReq){
     if (body.find("\r\n", body.size() - 2) == body.size() - 2)
         body.erase(body.size() -2, 10);
     std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
-	std::cout << "g_file = " << g_file << std::endl;
 	if (!outfile) {
 		return (errorPage(500));
 	}
@@ -280,18 +252,6 @@ std::string continueUpload(std::string strReq){
 
     return (ret);
 }
-
-// std::string post(std::map<std::string, std::string> m_env, Request &req){
-//     //if (!existsFile(m_env["PATH_TRANSLATED"])){
-//         return (uploadFile(m_env, req));
-//     //}
-//
-//     std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
-//     std::ifstream       f(m_env["PATH_TRANSLATED"].c_str())
-//
-//     // std::cout << "ret:\n" << ret << std::endl;
-//     return (ret);
-// }
 
 std::string multipartHandler(Request &req, std::string strReq){
     std::string     ret = "HTTP/1.1 ";
