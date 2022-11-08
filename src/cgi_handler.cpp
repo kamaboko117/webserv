@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/04 16:44:36 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 13:17:01 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,7 +321,6 @@ std::string deleteHandler(std::map<std::string, std::string> m_env){
 }
 
 std::string autoindex(std::string path, std::map<std::string, std::string> m_env){
-    std::cout << "*************POUET*************" << std::endl;
     m_env["QUERY_STRING"] = "PATH=" + path;
     m_env["PATH_TRANSLATED"] = "./autoindex.php";
     return (executeCGI(m_env, ""));
@@ -334,7 +333,6 @@ std::string getValidIndex(std::vector<std::string> indexes){
             return indexes[i];
     }
     return ("");
-    
 }
 
 std::string requestHandler(std::string strReq, cfg::Server server){  
@@ -360,7 +358,6 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         extension = m_env["PATH_INFO"].substr(m_env["PATH_INFO"].find_last_of('.'), std::string::npos);
     
     m_env = CGISetEnv(req, server, *it, extension);
-std::cout << "*************POUET*************" << std::endl;
     if (extension == ".php" || extension == ".html")
         return (cgiHandler(m_env, req, strReq));
 
@@ -369,8 +366,6 @@ std::cout << "*************POUET*************" << std::endl;
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(403);
     if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
-        std::cout << "*************PT*************" << std::endl;
-        std::cout << it->_autoindex << std::endl;
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"], m_env));
         if (!it->_index.size())
