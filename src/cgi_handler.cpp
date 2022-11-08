@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 16:09:29 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 16:13:18 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -360,10 +360,8 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if(req.getRet() != 200)
         return (errorPage(req.getRet()));
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
-    if (it == server._locations.end()){
-        std::cout << "no matching location" << std::endl;
+    if (it == server._locations.end())
         return (errorPage(404));
-    }
     if (it->_root == "")
         it->_root = ".";
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
@@ -377,19 +375,15 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if ((extension == ".php" || extension == ".html") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq));
 
-    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
-        std::cout << "file does not exist" << std::endl;
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
         return errorPage(404);
-    }
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(403);
     if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
-        if (!it->_index.size()){
-            std::cout << "no indexes" << std::endl;
+        if (!it->_index.size())
             return (errorPage(404));
-        }
         m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
         if (m_env["PATH_TRANSLATED"] == "")
             return (errorPage(404));
