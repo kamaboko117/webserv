@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 17:56:40 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 18:26:47 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -374,16 +374,16 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     
     if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
-    if ((extension == ".php" || extension == ".html") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
+    if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq));
 std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
-    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
-        std::cout << "\n*****file does not exist" << std::endl;
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
+        std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
         return errorPage(404);
     }
-    if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
+    if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
         return errorPage(403);
-    if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
+    if ((isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST") || m_env["PATH_INFO"] == it->_root){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
         if (!it->_index.size()){
@@ -395,6 +395,9 @@ std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
             std::cout << "\n*****indexes found but none valid" << std::endl;
             return (errorPage(404));
         }
+        extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+        if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
+            return (cgiHandler(m_env, req, strReq));
     }
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
