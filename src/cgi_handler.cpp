@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 16:13:18 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 17:53:09 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
         ret["PATH_INFO"] = "";
-    ret["PATH_TRANSLATED"] = location._root + ret["PATH_INFO"]; //conf path + path info basically (i think)
+    ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"].replace(0, location._location.size(), location._root); //conf path + path info basically (i think)
     if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
         extension = ret["PATH_TRANSLATED"].substr(ret["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
     ret["SCRIPT_NAME"] = location._cgi_pass[extension];
@@ -112,6 +112,7 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
     
     args[2] = NULL;
     pipe(fd);
+    std::cout << "path translated: "<< m_env["PATH_TRANSLATED"] << std::endl;
     if ((cgiPID = fork()) == 0)
     {
         char * const * nll = NULL;
@@ -119,7 +120,7 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
         close(fd[0]);
         dup(fd[1]);
         dup2(fdIn, STDIN_FILENO);
-        chdir(m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of("/"), 0).c_str());
+        chdir(m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of("/"), std::string::npos).c_str());
         execve(args[0], nll, env);
         std::cerr << "Execve crashed." << std::endl;
         write(fd[1], "Status: 500\r\n\r\n", 15);
@@ -281,7 +282,7 @@ std::string deleteHandler(std::map<std::string, std::string> m_env){
     return (ret);
 }
 
-std::string        autoindex(char const *dir_path)
+std::string autoindex(char const *dir_path)
 {
     DIR                    *dh;
     struct dirent        *contents;
@@ -360,10 +361,12 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if(req.getRet() != 200)
         return (errorPage(req.getRet()));
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
-    if (it == server._locations.end())
+    if (it == server._locations.end()){
+        std::cout << "\n*****no location found" << std::endl;
         return (errorPage(404));
+    }
     if (it->_root == "")
-        it->_root = ".";
+        it->_root = it->_location;
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
         return (errorPage(405));
 
@@ -374,19 +377,25 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
     if ((extension == ".php" || extension == ".html") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq));
-
-    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
+std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
+        std::cout << "\n*****file does not exist" << std::endl;
         return errorPage(404);
+    }
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(403);
     if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
-        if (!it->_index.size())
+        if (!it->_index.size()){
+            std::cout << "\n*****no index" << std::endl;
             return (errorPage(404));
+        }
         m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
-        if (m_env["PATH_TRANSLATED"] == "")
+        if (m_env["PATH_TRANSLATED"] == ""){
+            std::cout << "\n*****indexes found but none valid" << std::endl;
             return (errorPage(404));
+        }
     }
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
