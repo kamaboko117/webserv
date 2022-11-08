@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 15:15:46 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 16:09:29 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
     if (ret["PATH_INFO"] == "/")
         ret["PATH_INFO"] = "";
-    ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"]; //conf path + path info basically (i think)
+    ret["PATH_TRANSLATED"] = location._root + ret["PATH_INFO"]; //conf path + path info basically (i think)
     if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
         extension = ret["PATH_TRANSLATED"].substr(ret["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
     ret["SCRIPT_NAME"] = location._cgi_pass[extension];
@@ -260,7 +260,7 @@ std::string multipartHandler(Request &req, std::string strReq, cfg::t_location l
     g_pending = true;
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
-    g_folder = location._upload_store; // check if this is a directory
+    g_folder = location._root + "/" + location._upload_store; // check if this is a directory
     if (req.getBody() != "")
         return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
     ret += "100 Continue\r\n";
@@ -298,7 +298,7 @@ std::string        autoindex(char const *dir_path)
     {
         if (std::string(contents->d_name) != "." && std::string(contents->d_name) != "..")
         {
-            autoindex.append("<li><a href=\"");
+            autoindex.append("<li><a href=\"/");
             autoindex.append(dir_path);
             if (*autoindex.rbegin() != '/')
                 autoindex.append("/");
@@ -360,8 +360,12 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if(req.getRet() != 200)
         return (errorPage(req.getRet()));
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
-    if (it == server._locations.end())
+    if (it == server._locations.end()){
+        std::cout << "no matching location" << std::endl;
         return (errorPage(404));
+    }
+    if (it->_root == "")
+        it->_root = ".";
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
         return (errorPage(405));
 
@@ -373,15 +377,19 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     if ((extension == ".php" || extension == ".html") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq));
 
-    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST")
+    if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
+        std::cout << "file does not exist" << std::endl;
         return errorPage(404);
+    }
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET")
         return errorPage(403);
     if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST"){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
-        if (!it->_index.size())
+        if (!it->_index.size()){
+            std::cout << "no indexes" << std::endl;
             return (errorPage(404));
+        }
         m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
         if (m_env["PATH_TRANSLATED"] == "")
             return (errorPage(404));
