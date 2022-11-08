@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 17:53:09 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/08 17:56:40 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,6 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
     
     args[2] = NULL;
     pipe(fd);
-    std::cout << "path translated: "<< m_env["PATH_TRANSLATED"] << std::endl;
     if ((cgiPID = fork()) == 0)
     {
         char * const * nll = NULL;
