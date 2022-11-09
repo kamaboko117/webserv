@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/08 18:26:47 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/09 13:34:35 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -347,6 +347,13 @@ std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, c
     return (ret);
 }
 
+std::string redirect(cfg::t_location location){
+    std::string ret = "HTTP/1.1 ";
+    ft_itoa_string(location._return.first, ret);
+    ret += "\r\nLocation: " + location._return.second + "\r\n\r\n";
+    return (ret);
+}
+
 std::string requestHandler(std::string strReq, cfg::Server server){  
     if (g_pending)
         return (continueUpload(strReq));
@@ -364,6 +371,9 @@ std::string requestHandler(std::string strReq, cfg::Server server){
         std::cout << "\n*****no location found" << std::endl;
         return (errorPage(404));
     }
+std::cout << "redirect: " << it->_return.first << " " << it->_return.second << std::endl;
+    if (it->_return.first)
+        return (redirect(*it));
     if (it->_root == "")
         it->_root = it->_location;
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
