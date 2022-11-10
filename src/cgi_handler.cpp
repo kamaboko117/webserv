@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/10 14:52:55 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/10 17:07:51 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,6 +249,7 @@ std::string continueUpload(std::string strReq, cfg::Server server){
         body.erase(body.size() -2, 10);
     std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
 	if (!outfile) {
+        std::cout << "g_file: " << g_file << std::endl;
 		return (errorPage(500, server));
 	}
     outfile << body;
@@ -267,7 +268,7 @@ std::string continueUpload(std::string strReq, cfg::Server server){
 
 std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location, cfg::Server server){
     std::string     ret = "HTTP/1.1 ";
-
+std::cout << "**********multipart******" << std::endl;
     g_pending = true;
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
@@ -375,36 +376,45 @@ std::string requestHandler(std::string strReq, cfg::Server server){
     Request                             req(strReq);
     std::string                         type;
     
+    //request class sets its ret variable to 200 if request is correct
     if(req.getRet() != 200)
         return (errorPage(req.getRet(), server));
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
-    if (it == server._locations.end()){
-        // std::cout << "\n*****no location found" << std::endl;
+    if (it == server._locations.end())
         return (errorPage(404, server));
-    }
-std::cout << "redirect: " << it->_return.first << " " << it->_return.second << std::endl;
+
+    //check redirection
     if (it->_return.first)
         return (redirect(*it));
+
+    //set root if exists
     if (it->_root == "")
-        it->_root = it->_location;
+        it->_root = "./" + it->_location;
+    
+    //check if method is allowed
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
         return (errorPage(405, server));
 
     std::string extension = "";
+    //set environment for cgi
     m_env = CGISetEnv(req, server, *it);
     
     if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
     if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
         return (cgiHandler(m_env, req, strReq, server));
-std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
+
+    //check if file exists
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
         std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
         return errorPage(404, server);
     }
+    //check if file is readable
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
         return errorPage(403, server);
-    if ((isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST") || m_env["PATH_INFO"] == it->_root){
+    
+    //check if file is a directory => index or autoindex
+    if ((isDirectory(m_env["PATH_TRANSLATED"]) || m_env["PATH_INFO"] == it->_root) && m_env["REQUEST_METHOD"] != "POST"){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
         if (!it->_index.size()){
@@ -420,14 +430,21 @@ std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
         if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
             return (cgiHandler(m_env, req, strReq, server));
     }
+
+    //handle posts
     if (m_env["REQUEST_METHOD"] == "POST"){
+        if (server._client_max_body_size && (std::size_t)ft_stoi(m_env["CONTENT_LENGTH"]) > server._client_max_body_size)
+            return (errorPage(400, server));
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
             return (multipartHandler(req, strReq, *it, server));
         return (uploadFile(m_env, req, server, *it));
     }
+
+    //handle deletes
     else if (m_env["REQUEST_METHOD"] == "DELETE"){
         return (deleteHandler(m_env, server));
     }
+    //from here method can only be GET. 
     else if (extension == ".ico")
         type = "images/x-icon";
     else if (extension == ".mp4")
