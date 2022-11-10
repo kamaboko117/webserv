@@ -194,18 +194,22 @@ void						getServerName
 	}
 }
 
-void						getErrorPage
+void                        getErrorPage
 (
-	std::vector<std::string>::iterator		&pos,
-	std::vector<std::string>::iterator		end,
-	std::vector<cfg::Server>				&server
+    std::vector<std::string>::iterator        &pos,
+    std::vector<std::string>::iterator        end,
+    std::vector<cfg::Server>                &server
 )
 {
-	++pos;
-	if (pos == end || pos + 1 == end)
-		throw ParseError();
-	server.back()._error_page[sstoi(*pos)] = *(pos + 1);
-	pos += 3;
+    int            tmp;
+
+    ++pos;
+    if (pos == end || pos + 1 == end)
+        throw ParseError();
+    tmp = sstoi(*pos);
+    ++pos;
+    server.back()._error_page[tmp] = *pos;
+    ++pos;
 }
 
 void						getClientMaxBodySize

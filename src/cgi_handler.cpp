@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/09 13:34:35 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/10 14:52:55 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,8 @@ std::string g_file;
 std::string g_head;
 std::string g_body;
 std::map<std::string, std::string> g_m_env;
+
+std::string requestHandler(std::string strReq, cfg::Server server);
 
 // https://forhjy.medium.com/42-webserv-cgi-programming-66d63c3b22db
 std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, cfg::t_location location){
@@ -69,12 +71,21 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     return(ret);
 }
 
-std::string errorPage(int code){
+std::string errorPage(int code, cfg::Server server){
     std::string ret = "HTTP/1.1 ";
-    std::string body = "error: ";
-
     ft_itoa_string(code, ret);
-    ft_itoa_string(code, body);
+    std::string body;
+    if (server._error_page.count(code)){
+        // std::ifstream       f(server._error_page[code].c_str());
+        // std::stringstream   ss;
+
+        // ss << f.rdbuf();
+        // body = ss.str();
+        return (requestHandler("GET /" + server._error_page[code] + " HTTP/1.1\r\n", server));
+    } else {
+        body = "error: ";
+        ft_itoa_string(code, body);
+    }
     body += "\r\n";
     ret += "\r\nContent-Type: text/plain\r\nContent-Length: ";
     ft_itoa_string(body.length(), ret);
@@ -84,7 +95,7 @@ std::string errorPage(int code){
     return (ret);
 }
 
-std::string executeCGI(std::map<std::string, std::string> m_env, std::string body){
+std::string executeCGI(std::map<std::string, std::string> m_env, std::string body, cfg::Server server){
     char        *args[3];
     int         fd[2];
     pid_t       cgiPID;
@@ -157,14 +168,14 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
     
     std::size_t pos = retHeader.find("Status:");
     if (pos != std::string::npos){
-        return (errorPage(ft_stoi(retHeader.substr(pos + 8, std::string::npos))));
+        return (errorPage(ft_stoi(retHeader.substr(pos + 8, std::string::npos)), server));
     }
     ret += "\r\n" + retHeader;
     ret += "\r\n\r\n" + retBody;
     return (ret);
 }
 
-std::string continueCGIUpload(std::string strReq){
+std::string continueCGIUpload(std::string strReq, cfg::Server server){
     std::string     ret = "HTTP/1.1 ";
     std::size_t     pos = 0;
 
@@ -178,13 +189,13 @@ std::string continueCGIUpload(std::string strReq){
         return ("");
     } else {
         g_cgipending = false;
-        return (executeCGI(g_m_env, g_body));
+        return (executeCGI(g_m_env, g_body, server));
     }
 
     return (g_body);
 }
 
-std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq)
+std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq, cfg::Server server)
 {
     if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data"){
         g_cgipending = true;
@@ -193,11 +204,11 @@ std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, s
         g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
         g_m_env = m_env;
         if (req.getBody() != "")
-            return (continueCGIUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
+            return (continueCGIUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server));
         return ("");
     }
     
-    return (executeCGI(m_env, req.getBody()));
+    return (executeCGI(m_env, req.getBody(), server));
 }
 
 std::string transferFile(std::string type, std::string file){
@@ -213,7 +224,7 @@ std::string transferFile(std::string type, std::string file){
     return (ret);
 }
 
-std::string continueUpload(std::string strReq){
+std::string continueUpload(std::string strReq, cfg::Server server){
     std::string     ret = "HTTP/1.1 ";
     std::size_t     pos = 0;
 
@@ -238,7 +249,7 @@ std::string continueUpload(std::string strReq){
         body.erase(body.size() -2, 10);
     std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
 	if (!outfile) {
-		return (errorPage(500));
+		return (errorPage(500, server));
 	}
     outfile << body;
     pos = strReq.find(g_boundary + "--");
@@ -254,7 +265,7 @@ std::string continueUpload(std::string strReq){
     return (ret);
 }
 
-std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location){
+std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location, cfg::Server server){
     std::string     ret = "HTTP/1.1 ";
 
     g_pending = true;
@@ -262,18 +273,18 @@ std::string multipartHandler(Request &req, std::string strReq, cfg::t_location l
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
     g_folder = location._root + "/" + location._upload_store; // check if this is a directory
     if (req.getBody() != "")
-        return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos)));
+        return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server));
     ret += "100 Continue\r\n";
 
     //return (ret);
     return ("");
 }
 
-std::string deleteHandler(std::map<std::string, std::string> m_env){
+std::string deleteHandler(std::map<std::string, std::string> m_env, cfg::Server server){
     std::string ret = "HTTP/1.1 ";
 
     if (remove(m_env["PATH_TRANSLATED"].c_str()))
-        return (errorPage(403));
+        return (errorPage(403, server));
     ret += " 200\r\nContent-Length: ";
     std::string body = m_env["PATH_TRANSLATED"] + " succesfully deleted";
     ft_itoa_string(body.size(), ret);
@@ -323,7 +334,7 @@ std::string getValidIndex(std::vector<std::string> indexes){
     return ("");
 }
 
-std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::t_location location){
+std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location){
     g_file = location._upload_store;
     long length = ft_stol(req.getHeaders()["Content-Length"]);
    
@@ -331,7 +342,7 @@ std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, c
     std::string     ret;
    
     if (!outfile)
-        return (errorPage(500));
+        return (errorPage(500, server));
     outfile << req.getBody() << std::endl;
     outfile.close();
     if (outfile.tellp() < length){
@@ -356,20 +367,20 @@ std::string redirect(cfg::t_location location){
 
 std::string requestHandler(std::string strReq, cfg::Server server){  
     if (g_pending)
-        return (continueUpload(strReq));
+        return (continueUpload(strReq, server));
     if (g_cgipending)
-        return (continueCGIUpload(strReq));
+        return (continueCGIUpload(strReq, server));
     
     std::map<std::string, std::string>  m_env;
     Request                             req(strReq);
     std::string                         type;
     
     if(req.getRet() != 200)
-        return (errorPage(req.getRet()));
+        return (errorPage(req.getRet(), server));
     std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
     if (it == server._locations.end()){
-        std::cout << "\n*****no location found" << std::endl;
-        return (errorPage(404));
+        // std::cout << "\n*****no location found" << std::endl;
+        return (errorPage(404, server));
     }
 std::cout << "redirect: " << it->_return.first << " " << it->_return.second << std::endl;
     if (it->_return.first)
@@ -377,7 +388,7 @@ std::cout << "redirect: " << it->_return.first << " " << it->_return.second << s
     if (it->_root == "")
         it->_root = it->_location;
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
-        return (errorPage(405));
+        return (errorPage(405, server));
 
     std::string extension = "";
     m_env = CGISetEnv(req, server, *it);
@@ -385,37 +396,37 @@ std::cout << "redirect: " << it->_return.first << " " << it->_return.second << s
     if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
         extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
     if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
-        return (cgiHandler(m_env, req, strReq));
+        return (cgiHandler(m_env, req, strReq, server));
 std::cout << "path: " << m_env["PATH_TRANSLATED"] << std::endl;
     if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
         std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
-        return errorPage(404);
+        return errorPage(404, server);
     }
     if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
-        return errorPage(403);
+        return errorPage(403, server);
     if ((isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST") || m_env["PATH_INFO"] == it->_root){
         if (it->_autoindex)
             return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
         if (!it->_index.size()){
             std::cout << "\n*****no index" << std::endl;
-            return (errorPage(404));
+            return (errorPage(404, server));
         }
         m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
         if (m_env["PATH_TRANSLATED"] == ""){
             std::cout << "\n*****indexes found but none valid" << std::endl;
-            return (errorPage(404));
+            return (errorPage(404, server));
         }
         extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
         if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
-            return (cgiHandler(m_env, req, strReq));
+            return (cgiHandler(m_env, req, strReq, server));
     }
     if (m_env["REQUEST_METHOD"] == "POST"){
         if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
-            return (multipartHandler(req, strReq, *it));
-        return (uploadFile(m_env, req, *it));
+            return (multipartHandler(req, strReq, *it, server));
+        return (uploadFile(m_env, req, server, *it));
     }
     else if (m_env["REQUEST_METHOD"] == "DELETE"){
-        return (deleteHandler(m_env));
+        return (deleteHandler(m_env, server));
     }
     else if (extension == ".ico")
         type = "images/x-icon";
