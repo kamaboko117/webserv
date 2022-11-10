@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/10 17:07:51 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/10 17:10:40 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,7 +249,6 @@ std::string continueUpload(std::string strReq, cfg::Server server){
         body.erase(body.size() -2, 10);
     std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
 	if (!outfile) {
-        std::cout << "g_file: " << g_file << std::endl;
 		return (errorPage(500, server));
 	}
     outfile << body;
@@ -268,7 +267,7 @@ std::string continueUpload(std::string strReq, cfg::Server server){
 
 std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location, cfg::Server server){
     std::string     ret = "HTTP/1.1 ";
-std::cout << "**********multipart******" << std::endl;
+
     g_pending = true;
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
