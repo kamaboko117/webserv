@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/10 17:10:40 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/11 13:35:09 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -388,7 +388,7 @@ std::string requestHandler(std::string strReq, cfg::Server server){
 
     //set root if exists
     if (it->_root == "")
-        it->_root = "./" + it->_location;
+        it->_root = "/" + it->_location;
     
     //check if method is allowed
     if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
