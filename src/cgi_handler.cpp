@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/16 14:21:45 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/16 16:07:24 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -298,7 +298,6 @@ std::string autoindex(char const *dir_path)
     struct dirent        *contents;
     std::string             head = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
     std::string            autoindex;
-std::cout << "dir path: " << dir_path << std::endl;
     dh = opendir(dir_path);
     if (!dh)
         return std::string("<body>dir_path not found !</body>");
@@ -335,23 +334,14 @@ std::string getValidIndex(std::vector<std::string> indexes){
 }
 
 std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location, std::vector<cfg::Server> server_list){
-    long length = ft_stol(req.getHeaders()["Content-Length"]);
-    
     std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::app | std::ios_base::binary);
     std::string     ret;
    
     if (!outfile)
         return (errorPage(500, server, server_list));
-    outfile << req.getBody() << std::endl;
+    outfile << req.getBody();
     outfile.close();
-    if (outfile.tellp() < length){
-        ret = "HTTP/1.1 100\r\n";
-        g_pending = true;
-    }
-    else{
-        ret = "HTTP/1.1 201\r\n";
-        g_pending = false;
-    }
+    ret = "HTTP/1.1 201\r\n";
     ret += "Content-Length: 0\r\nLocation: ";
     ret += m_env["PATH_TRANSLATED"] + "\r\n\r\n";
     return (ret);
@@ -371,7 +361,6 @@ cfg::Server findServer(std::vector<cfg::Server>	server_list, Request &req){
     if (headers.count("Host")){
         std::string server_name = headers["Host"].substr(0, headers["Host"].find_last_of(":"));
         std::size_t listen = ft_stoi(headers["Host"].substr(headers["Host"].find_last_of(":") + 1, std::string::npos));
-        std::cout << server_name << " " << listen << std::endl;
         for (size_t i = 0; i < server_list.size(); i++){
             for (size_t j = 0; j < server_list[i]._server_name.size(); j++){
                 if (server_list[i]._server_name[j] == server_name && server_list[i]._listen == listen)
