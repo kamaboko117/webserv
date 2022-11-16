@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/11 14:19:32 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/16 14:19:04 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -271,7 +271,7 @@ std::string multipartHandler(Request &req, std::string strReq, cfg::t_location l
     g_pending = true;
     std::string contentType = req.getHeaders()["Content-Type"];
     g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
-    g_folder = location._root + "/" + location._upload_store; // check if this is a directory
+    g_folder = "./" + location._root + "/" + location._upload_store; // check if this is a directory
     if (req.getBody() != "")
         return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server, server_list));
     ret += "100 Continue\r\n";
@@ -335,14 +335,16 @@ std::string getValidIndex(std::vector<std::string> indexes){
 }
 
 std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location, std::vector<cfg::Server> server_list){
-    g_file = location._upload_store;
     long length = ft_stol(req.getHeaders()["Content-Length"]);
-   
-    std::ofstream   outfile(m_env["PATH_TRANSLATED"].c_str());
+    
+    std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::app | std::ios_base::binary);
     std::string     ret;
    
-    if (!outfile)
+    if (!outfile){
+        std::cout << "here" << std::endl;
         return (errorPage(500, server, server_list));
+    }
+    std::cout << "not here" << std::endl;
     outfile << req.getBody() << std::endl;
     outfile.close();
     if (outfile.tellp() < length){
