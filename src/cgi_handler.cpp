@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/16 14:19:04 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/16 14:21:45 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -340,11 +340,8 @@ std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, c
     std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::app | std::ios_base::binary);
     std::string     ret;
    
-    if (!outfile){
-        std::cout << "here" << std::endl;
+    if (!outfile)
         return (errorPage(500, server, server_list));
-    }
-    std::cout << "not here" << std::endl;
     outfile << req.getBody() << std::endl;
     outfile.close();
     if (outfile.tellp() < length){
