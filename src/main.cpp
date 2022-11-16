@@ -175,12 +175,12 @@ int main (int argc, char *argv[])
 						break;
 					}
 					else{
-						std::string responseCGI = requestHandler(client, server_list[0]);
+						std::string responseCGI = requestHandler(client, server_list);
 						
 						printf("*******************\n");
 						printf("| Server respond: |\n");
 						printf("*******************\n");
-						std::cout << responseCGI << std::endl;
+						// std::cout << responseCGI << std::endl;
 						//std::cout << page_upload << std::endl;
 						// if (r_s.route == "/favicon.ico")
 						// 	rc = send(fds[i].fd, NULL, 0, 0);
