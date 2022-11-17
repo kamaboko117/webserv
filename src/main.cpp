@@ -54,7 +54,9 @@ int main (int argc, char *argv[])
 		return (-1);
 	}
 
-	struct pollfd fds[server_list.size() * 10];
+	/*- La limitation de fds cree des bug ajout dynamque en C++ vector ??? -*/
+	//struct pollfd fds[server_list.size() * 10];
+
 	memset(fds, 0, sizeof(fds));
 
 	int	len = 0;
@@ -77,9 +79,10 @@ int main (int argc, char *argv[])
 	char   buffer[1048576];
 	int    nfds = server_len, current_size = 0, i, j;
 
+	std::cout << "webserv [" << GRN "start" NC << "]" << std::endl;
+
 	do
 	{
-		printf("\nWaiting on poll()...\n");
 		rc = poll(fds, nfds, -1);
 
 		if (rc < 0)
