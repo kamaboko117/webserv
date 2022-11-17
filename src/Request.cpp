@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/19 14:20:16 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/02 15:52:19 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/17 13:27:45 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,7 @@ void    Request::initHeaders(){
 	_headers["Content-Length"] = "";
 	_headers["Content-Location"] = "";
 	_headers["Content-Type"] = "";
+    _headers["Cookie"] = "";
 	_headers["Date"] = "";
 	_headers["Host"] = "";
 	_headers["Last-Modified"] = "";

@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/16 16:07:24 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/17 13:41:49 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,8 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
     //ret["AUTH_TYPE"] = "";
     ret["CONTENT_TYPE"] = headers["Content-Type"];
     ret["CONTENT_LENGTH"] = headers["Content-Length"];
+    if (headers["Cookie"] != "")
+        ret["HTTP_COOKIE"] = headers["Cookie"];
 
     return(ret);
 }
