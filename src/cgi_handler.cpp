@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/17 13:41:49 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/17 13:49:11 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -336,7 +336,7 @@ std::string getValidIndex(std::vector<std::string> indexes){
 }
 
 std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location, std::vector<cfg::Server> server_list){
-    std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::app | std::ios_base::binary);
+    std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::binary);
     std::string     ret;
    
     if (!outfile)
