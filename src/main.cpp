@@ -39,6 +39,39 @@ void	usage(char *str) {
 	exit(EXIT_FAILURE);
 }
 
+void	print_revents(struct pollfd fds) {
+	if (fds.revents == POLLIN)
+		return;
+	if (fds.revents & POLLIN)
+		printf("1 POLLIN\n");
+	else
+		printf("0 POLLIN\n"); 
+	if (fds.revents & POLLOUT)
+		printf("1 POLLOUT\n");
+	else
+		printf("0 POLLOUT\n"); 
+	if (fds.revents & POLLPRI)
+		printf("1 POLLPRI\n");
+	else
+		printf("0 POLLPRI\n"); 
+	if (fds.revents & POLLERR)
+		printf("1 POLLERR\n");
+	else
+		printf("0 POLLERR\n"); 
+	if (fds.revents & POLLHUP)
+		printf("1 POLLHUP\n");
+	else
+		printf("0 POLLHUP\n"); 
+	if (fds.revents & POLLRDHUP)
+		printf("1 POLLRDHUP\n");
+	else
+		printf("0 POLLRDHUP\n"); 
+	if (fds.revents & POLLNVAL)
+		printf("1 POLLNVAL\n");
+	else
+		printf("0 POLLNVAL\n"); 
+}
+
 int main (int argc, char *argv[])
 {
 	if (argc != 2) {
@@ -54,7 +87,7 @@ int main (int argc, char *argv[])
 		return (-1);
 	}
 
-	struct pollfd fds[server_list.size() * 100];
+	struct pollfd fds[server_list.size() * 200];
 
 	memset(fds, 0, sizeof(fds));
 
@@ -100,46 +133,22 @@ int main (int argc, char *argv[])
 		current_size = nfds;
 		for (i = 0; i < current_size; i++)
 		{
+			//print_revents(fds[i]);
 			if(fds[i].revents == 0)
 				continue;
 
 			if(fds[i].revents & POLLHUP) {
+				printf("POLLHUP: 1");
 				close_conn = TRUE;
 				close(fds[i].fd);
 				fds[i].fd = 0;
 				break;
+			} else if (fds[i].revents & POLLNVAL) {
+				
 			}
 			else if(fds[i].revents != POLLIN)
 			{
 				printf("  Error! revents = %d\n", fds[i].revents);
-				if (fds[i].revents & POLLIN)
-					printf("1 POLLIN\n");
-				else
-					printf("0 POLLIN\n"); 
-				if (fds[i].revents & POLLOUT)
-					printf("1 POLLOUT\n");
-				else
-					printf("0 POLLOUT\n"); 
-				if (fds[i].revents & POLLPRI)
-					printf("1 POLLPRI\n");
-				else
-					printf("0 POLLPRI\n"); 
-				if (fds[i].revents & POLLERR)
-					printf("1 POLLERR\n");
-				else
-					printf("0 POLLERR\n"); 
-				if (fds[i].revents & POLLHUP)
-					printf("1 POLLHUP\n");
-				else
-					printf("0 POLLHUP\n"); 
-				if (fds[i].revents & POLLRDHUP)
-					printf("1 POLLRDHUP\n");
-				else
-					printf("0 POLLRDHUP\n"); 
-				if (fds[i].revents & POLLNVAL)
-					printf("1 POLLNVAL\n");
-				else
-					printf("0 POLLNVAL\n"); 
 				end_server = TRUE;
 				break;
 
