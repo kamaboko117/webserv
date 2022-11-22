@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 18:45:57 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/22 18:49:21 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -445,7 +445,8 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 			std::cout << "\n*****indexes found but none valid" << std::endl;
 			return (errorPage(404, server, server_list));
 		}
-		extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+		if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+			extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
         //remove potential '/' at the end of extension
         extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
 		if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
