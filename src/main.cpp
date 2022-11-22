@@ -133,21 +133,21 @@ int main (int argc, char *argv[])
 		current_size = nfds;
 		for (i = 0; i < current_size; i++)
 		{
-			//print_revents(fds[i]);
 			if(fds[i].revents == 0)
 				continue;
 
 			if(fds[i].revents & POLLHUP) {
-				printf("POLLHUP: 1");
+				//printf("POLLHUP: 1");
 				close_conn = TRUE;
 				close(fds[i].fd);
 				fds[i].fd = 0;
 				break;
 			} else if (fds[i].revents & POLLNVAL) {
-				
+				break;
 			}
 			else if(fds[i].revents != POLLIN)
 			{
+				print_revents(fds[i]);
 				printf("  Error! revents = %d\n", fds[i].revents);
 				end_server = TRUE;
 				break;
