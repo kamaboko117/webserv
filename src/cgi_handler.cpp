@@ -6,7 +6,7 @@
 /*   By: seciurte <seciurte@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 18:00:06 by seciurte         ###   ########.fr       */
+/*   Updated: 2022/11/22 18:32:34 by seciurte         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,8 +57,11 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
 	if (ret["PATH_INFO"] == "/")
 		ret["PATH_INFO"] = "";
 	ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"].replace(0, location._location.size(), location._root); //conf path + path info basically (i think)
-	if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+	if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos){
 		extension = ret["PATH_TRANSLATED"].substr(ret["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+        //remove potential '/' at the end of extension
+        extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
+    }
 	ret["SCRIPT_NAME"] = location._cgi_pass[extension];
 	if (req.getPath().find('?') != std::string::npos)
 		ret["QUERY_STRING"] = req.getPath().substr(req.getPath().find('?') + 1, std::string::npos);
@@ -212,15 +215,18 @@ std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, s
 	return (executeCGI(m_env, req.getBody(), server, server_list));
 }
 
-std::string transferFile(std::string type, std::string file){
-	std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: " + type + "\r\nContent-Length: ";
-	std::ifstream       f(file.c_str());
-	std::stringstream   ss;
-	
-	ss << f.rdbuf();
-	ft_itoa_string(ss.str().length(), ret);
-	ret += "\r\n\r\n";
-	ret += ss.str();
+std::string transferFile(std::string type, std::string file, cfg::Server server, std::vector<cfg::Server> server_list){
+    std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: " + type + "\r\nContent-Length: ";
+    file = *file.rbegin() == '/' ? file.substr(0, file.size() - 1) : file;
+    std::ifstream       f(file.c_str());
+    std::stringstream   ss;
+
+    if (!f)
+        return (errorPage(500, server, server_list));
+    ss << f.rdbuf();
+    ft_itoa_string(ss.str().length(), ret);
+    ret += "\r\n\r\n";
+    ret += ss.str();
 
 	return (ret);
 }
@@ -365,7 +371,7 @@ cfg::Server findServer(std::vector<cfg::Server>	server_list, Request &req){
 		std::size_t listen = ft_stoi(headers["Host"].substr(headers["Host"].find_last_of(":") + 1, std::string::npos));
 		for (size_t i = 0; i < server_list.size(); i++){
 			for (size_t j = 0; j < server_list[i]._server_name.size(); j++){
-				if (server_list[i]._server_name[j] == server_name && server_list[i]._listen == listen)
+				if (server_list[i]._server_name[j] == server_name || server_list[i]._listen == listen)
 					return (server_list[i]);
 			} 
 		}
@@ -407,8 +413,11 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 	//set environment for cgi
 	m_env = CGISetEnv(req, server, *it);
 	
-	if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+	if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos){
 		extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+        //remove potential '/' at the end of extension
+        extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
+    }
 	if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
 		return (cgiHandler(m_env, req, strReq, server, server_list));
 
@@ -422,7 +431,7 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 		return errorPage(403, server, server_list);
 	
 	//check if file is a directory => index or autoindex
-	if ((isDirectory(m_env["PATH_TRANSLATED"]) || m_env["PATH_INFO"] == it->_root) && m_env["REQUEST_METHOD"] != "POST"){
+	if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET"){
 		if (it->_autoindex)
 			return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
 		if (!it->_index.size()){
@@ -436,10 +445,11 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 		}
 		if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
 			extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+        //remove potential '/' at the end of extension
+        extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
 		if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
 			return (cgiHandler(m_env, req, strReq, server, server_list));
 	}
-
 	//handle posts
 	if (m_env["REQUEST_METHOD"] == "POST"){
 		if (server._client_max_body_size && (std::size_t)ft_stoi(m_env["CONTENT_LENGTH"]) > server._client_max_body_size)
@@ -462,5 +472,5 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 		type = "text/html";
 	else
 		type = "text/plain";
-	return (transferFile(type, m_env["PATH_TRANSLATED"]));
+	return (transferFile(type, m_env["PATH_TRANSLATED"], server, server_list));
 }
