@@ -39,6 +39,39 @@ void	usage(char *str) {
 	exit(EXIT_FAILURE);
 }
 
+void	print_revents(struct pollfd fds) {
+	if (fds.revents == POLLIN)
+		return;
+	if (fds.revents & POLLIN)
+		printf("1 POLLIN\n");
+	else
+		printf("0 POLLIN\n"); 
+	if (fds.revents & POLLOUT)
+		printf("1 POLLOUT\n");
+	else
+		printf("0 POLLOUT\n"); 
+	if (fds.revents & POLLPRI)
+		printf("1 POLLPRI\n");
+	else
+		printf("0 POLLPRI\n"); 
+	if (fds.revents & POLLERR)
+		printf("1 POLLERR\n");
+	else
+		printf("0 POLLERR\n"); 
+	if (fds.revents & POLLHUP)
+		printf("1 POLLHUP\n");
+	else
+		printf("0 POLLHUP\n"); 
+	if (fds.revents & POLLRDHUP)
+		printf("1 POLLRDHUP\n");
+	else
+		printf("0 POLLRDHUP\n"); 
+	if (fds.revents & POLLNVAL)
+		printf("1 POLLNVAL\n");
+	else
+		printf("0 POLLNVAL\n"); 
+}
+
 int main (int argc, char *argv[])
 {
 	if (argc != 2) {
@@ -54,7 +87,8 @@ int main (int argc, char *argv[])
 		return (-1);
 	}
 
-	struct pollfd fds[server_list.size() * 10];
+	struct pollfd fds[server_list.size() * 200];
+
 	memset(fds, 0, sizeof(fds));
 
 	int	len = 0;
@@ -70,16 +104,17 @@ int main (int argc, char *argv[])
 	if (len == 0)
 		return (EXIT_FAILURE);
 	int		server_len = server_list.size();
-	int    rc, on = 1;
-	int    new_sd = -1;
-	int    end_server = FALSE, compress_array = FALSE;
-	int    close_conn;
-	char   buffer[1048576];
-	int    nfds = server_len, current_size = 0, i, j;
+	int		rc, on = 1;
+	int		new_sd = -1;
+	int		end_server = FALSE, compress_array = FALSE;
+	int		close_conn;
+	char	buffer[1048576];
+	int		nfds = server_len, current_size = 0, i, j;
+
+	std::cout << "webserv [" << GRN "start" NC << "]" << std::endl;
 
 	do
 	{
-		printf("\nWaiting on poll()...\n");
 		rc = poll(fds, nfds, -1);
 
 		if (rc < 0)
@@ -101,8 +136,18 @@ int main (int argc, char *argv[])
 			if(fds[i].revents == 0)
 				continue;
 
-			if(fds[i].revents != POLLIN)
+			if(fds[i].revents & POLLHUP) {
+				//printf("POLLHUP: 1");
+				close_conn = TRUE;
+				close(fds[i].fd);
+				fds[i].fd = 0;
+				break;
+			} else if (fds[i].revents & POLLNVAL) {
+				break;
+			}
+			else if(fds[i].revents != POLLIN)
 			{
+				print_revents(fds[i]);
 				printf("  Error! revents = %d\n", fds[i].revents);
 				end_server = TRUE;
 				break;
@@ -112,7 +157,7 @@ int main (int argc, char *argv[])
 			{
 				int	ok_fd = check_init_sock(fds[i].fd, server_list, server_len);
 
-				printf("  Listening socket is readable\n");
+				//printf("  Listening socket is readable\n");
 
 				do
 				{
@@ -128,7 +173,7 @@ int main (int argc, char *argv[])
 					}
 					ioctl(new_sd, FIONBIO, (char *)&on);
 
-					printf("  New incoming connection - %d\n", new_sd);
+					//printf("  New incoming connection - %d\n", new_sd);
 					fds[nfds].fd = new_sd;
 					fds[nfds].events = POLLIN;
 					nfds++;
@@ -154,9 +199,11 @@ int main (int argc, char *argv[])
 					}
 
 					/* Affichage des requêtes clients */
+					/*
 					printf("\n*******************\n");
 					printf("| Client request: |\n");
 					printf("*******************\n");
+					*/
 					std::string client;
 					// for (size_t i = 0; i < sizeof(buffer); i++)
 					// 	std::cout << buffer[i];
@@ -165,26 +212,27 @@ int main (int argc, char *argv[])
 					client.insert(client.size(), buffer, rc);
 					// pars_request(r_s, client);
 
-					std::cout << client << std::endl;
+					//std::cout << client << std::endl;
 					
 
 					if (rc == 0)
 					{
-						printf("  Connection closed\n");
+						//printf("  Connection closed\n");
 						close_conn = TRUE;
 						break;
 					}
 					else{
 						std::string responseCGI = requestHandler(client, server_list);
 						
+						/*
 						printf("*******************\n");
 						printf("| Server respond: |\n");
 						printf("*******************\n");
+						*/
 						// std::cout << responseCGI << std::endl;
 						//std::cout << page_upload << std::endl;
 						// if (r_s.route == "/favicon.ico")
 						// 	rc = send(fds[i].fd, NULL, 0, 0);
-						std::cout << "i: " << i << std::endl;
 						// else {
 							rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
 						// }
@@ -214,7 +262,7 @@ int main (int argc, char *argv[])
 
 				if (close_conn)
 				{
-					printf("close_conn\n");
+					//printf("close_conn\n");
 					close(fds[i].fd);
 					fds[i].fd = -1;
 					compress_array = TRUE;
@@ -227,7 +275,7 @@ int main (int argc, char *argv[])
 		if (compress_array)
 		{
 			compress_array = FALSE;
-			printf("compress_array\n");
+			//printf("compress_array\n");
 			for (i = 0; i < nfds; i++)
 			{
 				if (fds[i].fd == -1)
