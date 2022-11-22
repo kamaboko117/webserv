@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/17 13:49:11 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/22 14:25:53 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,8 +304,8 @@ std::string autoindex(char const *dir_path)
     if (!dh)
         return std::string("<body>dir_path not found !</body>");
     autoindex.append("<body><ul>");
-    autoindex.append("<li><a href=\"/.\">.</li>");
-    autoindex.append("<li><a href=\"/..\">..</li>");
+    autoindex.append("<li><a href=\"/" + std::string(dir_path) +  "\">.</li>");
+    autoindex.append("<li><a href=\"./\">..</li>");
     while ((contents = readdir(dh)) != NULL)
     {
         if (std::string(contents->d_name) != "." && std::string(contents->d_name) != "..")
