@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cgi_handler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
+/*   By: seciurte <seciurte@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 15:09:32 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/22 18:00:06 by seciurte         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -434,7 +434,8 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 			std::cout << "\n*****indexes found but none valid" << std::endl;
 			return (errorPage(404, server, server_list));
 		}
-		extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
+		if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
+			extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
 		if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
 			return (cgiHandler(m_env, req, strReq, server, server_list));
 	}

@@ -212,7 +212,7 @@ int main (int argc, char *argv[])
 					client.insert(client.size(), buffer, rc);
 					// pars_request(r_s, client);
 
-					//std::cout << client << std::endl;
+					// std::cout << client << std::endl;
 					
 
 					if (rc == 0)
