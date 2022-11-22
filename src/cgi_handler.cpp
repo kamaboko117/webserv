@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cgi_handler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seciurte <seciurte@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 14:50:30 by seciurte         ###   ########.fr       */
+/*   Updated: 2022/11/22 15:09:32 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,12 +78,11 @@ std::string errorPage(int code, cfg::Server server, std::vector<cfg::Server> ser
 	ft_itoa_string(code, ret);
 	std::string body;
 	if (server._error_page.count(code)){
-		// std::ifstream       f(server._error_page[code].c_str());
-		// std::stringstream   ss;
-
-		// ss << f.rdbuf();
-		// body = ss.str();
-		return (requestHandler("GET /" + server._error_page[code] + " HTTP/1.1\r\n", server_list));
+		ret = requestHandler("GET /" + server._error_page[code] + " HTTP/1.1\r\n", server_list);
+        int code = ft_stoi(ret.substr(9, std::string::npos));
+        if (code == 200)
+            ret.replace(9, 3, "404");
+		return (ret);
 	} else {
 		body = "error: ";
 		ft_itoa_string(code, body);
