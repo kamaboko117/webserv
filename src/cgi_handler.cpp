@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 17:35:08 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/22 18:45:57 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,8 @@ std::string errorPage(int code, cfg::Server server, std::vector<cfg::Server> ser
         int code = ft_stoi(ret.substr(9, std::string::npos));
         if (code == 200)
             ret.replace(9, 3, "404");
+		if (ret.substr(13, 2) == "OK")
+			ret.replace(13, 2, "Not Found");
 		return (ret);
 	} else {
 		body = "error: ";
