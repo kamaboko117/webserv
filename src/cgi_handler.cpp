@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 17:26:54 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/22 17:35:08 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -371,7 +371,7 @@ cfg::Server findServer(std::vector<cfg::Server>	server_list, Request &req){
 		std::size_t listen = ft_stoi(headers["Host"].substr(headers["Host"].find_last_of(":") + 1, std::string::npos));
 		for (size_t i = 0; i < server_list.size(); i++){
 			for (size_t j = 0; j < server_list[i]._server_name.size(); j++){
-				if (server_list[i]._server_name[j] == server_name && server_list[i]._listen == listen)
+				if (server_list[i]._server_name[j] == server_name || server_list[i]._listen == listen)
 					return (server_list[i]);
 			} 
 		}
