@@ -135,20 +135,26 @@ int main (int argc, char *argv[])
 		{
 			if(fds[i].revents == 0)
 				continue;
-
-			if(fds[i].revents & POLLHUP) {
-				//printf("POLLHUP: 1");
+			if (fds[i].revents & POLLERR) {
+				//printf("POLLERR\n");
+				close_conn = TRUE;
+				close(fds[i].fd);
+				fds[i].fd = 0;
+				break;
+			} else if(fds[i].revents & POLLHUP) {
+				//printf("POLLHUP\n");
 				close_conn = TRUE;
 				close(fds[i].fd);
 				fds[i].fd = 0;
 				break;
 			} else if (fds[i].revents & POLLNVAL) {
+				//printf("POLLNVAL\n");
 				break;
 			}
 			else if(fds[i].revents != POLLIN)
 			{
 				print_revents(fds[i]);
-				printf("  Error! revents = %d\n", fds[i].revents);
+				//printf("  Error! revents = %d\n", fds[i].revents);
 				end_server = TRUE;
 				break;
 
