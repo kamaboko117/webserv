@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/22 18:49:21 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/23 17:41:40 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,24 +76,26 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
 	return(ret);
 }
 
-std::string errorPage(int code, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string errorPage(int code, cfg::Server server){
 	std::string ret = "HTTP/1.1 ";
 	ft_itoa_string(code, ret);
 	std::string body;
 	if (server._error_page.count(code)){
-		ret = requestHandler("GET /" + server._error_page[code] + " HTTP/1.1\r\n", server_list);
-        int code = ft_stoi(ret.substr(9, std::string::npos));
-        if (code == 200)
-            ret.replace(9, 3, "404");
-		if (ret.substr(13, 2) == "OK")
-			ret.replace(13, 2, "Not Found");
-		return (ret);
+		std::ifstream       f(("./" + server._error_page[code]).c_str());
+		if (!f){
+			body = "error: ";
+			ft_itoa_string(code, body);
+		} else{
+			std::stringstream ss;
+			ss << f.rdbuf();
+			body = ss.str();
+		}
 	} else {
 		body = "error: ";
 		ft_itoa_string(code, body);
 	}
 	body += "\r\n";
-	ret += "\r\nContent-Type: text/plain\r\nContent-Length: ";
+	ret += "\r\nContent-Type: text/html\r\nContent-Length: ";
 	ft_itoa_string(body.length(), ret);
 	ret += "\r\n\r\n";
 	ret += body;
@@ -101,7 +103,7 @@ std::string errorPage(int code, cfg::Server server, std::vector<cfg::Server> ser
 	return (ret);
 }
 
-std::string executeCGI(std::map<std::string, std::string> m_env, std::string body, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string executeCGI(std::map<std::string, std::string> m_env, std::string body, cfg::Server server){
 	char        *args[3];
 	int         fd[2];
 	pid_t       cgiPID;
@@ -174,14 +176,14 @@ std::string executeCGI(std::map<std::string, std::string> m_env, std::string bod
 	
 	std::size_t pos = retHeader.find("Status:");
 	if (pos != std::string::npos){
-		return (errorPage(ft_stoi(retHeader.substr(pos + 8, std::string::npos)), server, server_list));
+		return (errorPage(ft_stoi(retHeader.substr(pos + 8, std::string::npos)), server));
 	}
 	ret += "\r\n" + retHeader;
 	ret += "\r\n\r\n" + retBody;
 	return (ret);
 }
 
-std::string continueCGIUpload(std::string strReq, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string continueCGIUpload(std::string strReq, cfg::Server server){
 	std::string     ret = "HTTP/1.1 ";
 	std::size_t     pos = 0;
 
@@ -195,13 +197,13 @@ std::string continueCGIUpload(std::string strReq, cfg::Server server, std::vecto
 		return ("");
 	} else {
 		g_cgipending = false;
-		return (executeCGI(g_m_env, g_body, server, server_list));
+		return (executeCGI(g_m_env, g_body, server));
 	}
 
 	return (g_body);
 }
 
-std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq, cfg::Server server, std::vector<cfg::Server> server_list)
+std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, std::string strReq, cfg::Server server)
 {
 	if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data"){
 		g_cgipending = true;
@@ -210,21 +212,21 @@ std::string cgiHandler(std::map<std::string, std::string> m_env, Request &req, s
 		g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
 		g_m_env = m_env;
 		if (req.getBody() != "")
-			return (continueCGIUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server, server_list));
+			return (continueCGIUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server));
 		return ("");
 	}
 	
-	return (executeCGI(m_env, req.getBody(), server, server_list));
+	return (executeCGI(m_env, req.getBody(), server));
 }
 
-std::string transferFile(std::string type, std::string file, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string transferFile(std::string type, std::string file, cfg::Server server){
     std::string         ret = "HTTP/1.1 200 OK\r\nContent-Type: " + type + "\r\nContent-Length: ";
     file = *file.rbegin() == '/' ? file.substr(0, file.size() - 1) : file;
     std::ifstream       f(file.c_str());
     std::stringstream   ss;
 
     if (!f)
-        return (errorPage(500, server, server_list));
+        return (errorPage(500, server));
     ss << f.rdbuf();
     ft_itoa_string(ss.str().length(), ret);
     ret += "\r\n\r\n";
@@ -233,7 +235,7 @@ std::string transferFile(std::string type, std::string file, cfg::Server server,
 	return (ret);
 }
 
-std::string continueUpload(std::string strReq, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string continueUpload(std::string strReq, cfg::Server server){
 	std::string     ret = "HTTP/1.1 ";
 	std::size_t     pos = 0;
 
@@ -258,7 +260,7 @@ std::string continueUpload(std::string strReq, cfg::Server server, std::vector<c
 		body.erase(body.size() -2, 10);
 	std::ofstream   outfile(g_file.c_str(), std::ios_base::app | std::ios_base::binary);
 	if (!outfile) {
-		return (errorPage(500, server, server_list));
+		return (errorPage(500, server));
 	}
 	outfile << body;
 	pos = strReq.find(g_boundary + "--");
@@ -274,7 +276,7 @@ std::string continueUpload(std::string strReq, cfg::Server server, std::vector<c
 	return (ret);
 }
 
-std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string multipartHandler(Request &req, std::string strReq, cfg::t_location location, cfg::Server server){
 	std::string     ret = "HTTP/1.1 ";
 
 	g_pending = true;
@@ -282,18 +284,18 @@ std::string multipartHandler(Request &req, std::string strReq, cfg::t_location l
 	g_boundary = "--" + contentType.substr(contentType.find("; boundary=") + 11, std::string::npos);
 	g_folder = "./" + location._root + "/" + location._upload_store; // check if this is a directory
 	if (req.getBody() != "")
-		return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server, server_list));
+		return (continueUpload(strReq.substr(strReq.find("\r\n\r\n") + 4, std::string::npos), server));
 	ret += "100 Continue\r\n";
 
 	//return (ret);
 	return ("");
 }
 
-std::string deleteHandler(std::map<std::string, std::string> m_env, cfg::Server server, std::vector<cfg::Server> server_list){
+std::string deleteHandler(std::map<std::string, std::string> m_env, cfg::Server server){
 	std::string ret = "HTTP/1.1 ";
 
 	if (remove(m_env["PATH_TRANSLATED"].c_str()))
-		return (errorPage(403, server, server_list));
+		return (errorPage(403, server));
 	ret += " 200\r\nContent-Length: ";
 	std::string body = m_env["PATH_TRANSLATED"] + " succesfully deleted";
 	ft_itoa_string(body.size(), ret);
@@ -343,12 +345,12 @@ std::string getValidIndex(std::vector<std::string> indexes){
 	return ("");
 }
 
-std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location, std::vector<cfg::Server> server_list){
+std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, cfg::Server server, cfg::t_location location){
 	std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::binary);
 	std::string     ret;
    
 	if (!outfile)
-		return (errorPage(500, server, server_list));
+		return (errorPage(500, server));
 	outfile << req.getBody();
 	outfile.close();
 	ret = "HTTP/1.1 201\r\n";
@@ -384,20 +386,21 @@ cfg::Server findServer(std::vector<cfg::Server>	server_list, Request &req){
 std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_list){  
 	static cfg::Server  server = server_list[0];
 	if (g_pending)
-		return (continueUpload(strReq, server, server_list));
+		return (continueUpload(strReq, server));
 	if (g_cgipending)
-		return (continueCGIUpload(strReq, server, server_list));
+		return (continueCGIUpload(strReq, server));
 	
 	std::map<std::string, std::string>  m_env;
 	Request                             req(strReq);
 	std::string                         type;
+	std::cout << "req handler" << std::endl;
 	server = findServer(server_list, req);
 	//request class sets its ret variable to 200 if request is correct
 	if(req.getRet() != 200)
-		return (errorPage(req.getRet(), server, server_list));
+		return (errorPage(req.getRet(), server));
 	std::vector<cfg::t_location>::iterator it = closestMatchingLocation(server, req.getPath());
 	if (it == server._locations.end())
-		return (errorPage(404, server, server_list));
+		return (errorPage(404, server));
 
 	//check redirection
 	if (it->_return.first)
@@ -409,7 +412,7 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 	
 	//check if method is allowed
 	if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
-		return (errorPage(405, server, server_list));
+		return (errorPage(405, server));
 
 	std::string extension = "";
 	//set environment for cgi
@@ -421,16 +424,16 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
         extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
     }
 	if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
-		return (cgiHandler(m_env, req, strReq, server, server_list));
+		return (cgiHandler(m_env, req, strReq, server));
 
 	//check if file exists
 	if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
 		std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
-		return errorPage(404, server, server_list);
+		return errorPage(404, server);
 	}
 	//check if file is readable
 	if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
-		return errorPage(403, server, server_list);
+		return errorPage(403, server);
 	
 	//check if file is a directory => index or autoindex
 	if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET"){
@@ -438,32 +441,32 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 			return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
 		if (!it->_index.size()){
 			std::cout << "\n*****no index" << std::endl;
-			return (errorPage(404, server, server_list));
+			return (errorPage(404, server));
 		}
 		m_env["PATH_TRANSLATED"] = getValidIndex(it->_index);
 		if (m_env["PATH_TRANSLATED"] == ""){
 			std::cout << "\n*****indexes found but none valid" << std::endl;
-			return (errorPage(404, server, server_list));
+			return (errorPage(404, server));
 		}
 		if (m_env["PATH_TRANSLATED"].find_last_of('.') != std::string::npos)
 			extension = m_env["PATH_TRANSLATED"].substr(m_env["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
         //remove potential '/' at the end of extension
         extension = *extension.rbegin() == '/' ? extension.substr(0, extension.size() - 1) : extension;
 		if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
-			return (cgiHandler(m_env, req, strReq, server, server_list));
+			return (cgiHandler(m_env, req, strReq, server));
 	}
 	//handle posts
 	if (m_env["REQUEST_METHOD"] == "POST"){
 		if (server._client_max_body_size && (std::size_t)ft_stoi(m_env["CONTENT_LENGTH"]) > server._client_max_body_size)
-			return (errorPage(400, server, server_list));
+			return (errorPage(400, server));
 		if (m_env["CONTENT_TYPE"].substr(0, m_env["CONTENT_TYPE"].find(';')) == "multipart/form-data")
-			return (multipartHandler(req, strReq, *it, server, server_list));
-		return (uploadFile(m_env, req, server, *it, server_list));
+			return (multipartHandler(req, strReq, *it, server));
+		return (uploadFile(m_env, req, server, *it));
 	}
 
 	//handle deletes
 	else if (m_env["REQUEST_METHOD"] == "DELETE"){
-		return (deleteHandler(m_env, server, server_list));
+		return (deleteHandler(m_env, server));
 	}
 	//from here method can only be GET. 
 	else if (extension == ".ico")
@@ -474,5 +477,5 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 		type = "text/html";
 	else
 		type = "text/plain";
-	return (transferFile(type, m_env["PATH_TRANSLATED"], server, server_list));
+	return (transferFile(type, m_env["PATH_TRANSLATED"], server));
 }
