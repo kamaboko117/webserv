@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/23 17:41:40 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/23 17:45:31 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -393,7 +393,6 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 	std::map<std::string, std::string>  m_env;
 	Request                             req(strReq);
 	std::string                         type;
-	std::cout << "req handler" << std::endl;
 	server = findServer(server_list, req);
 	//request class sets its ret variable to 200 if request is correct
 	if(req.getRet() != 200)
