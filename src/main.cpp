@@ -163,8 +163,6 @@ int main (int argc, char *argv[])
 			{
 				int	ok_fd = check_init_sock(fds[i].fd, server_list, server_len);
 
-				//printf("  Listening socket is readable\n");
-
 				do
 				{
 					new_sd = accept(ok_fd, NULL, NULL);
@@ -179,7 +177,6 @@ int main (int argc, char *argv[])
 					}
 					ioctl(new_sd, FIONBIO, (char *)&on);
 
-					//printf("  New incoming connection - %d\n", new_sd);
 					fds[nfds].fd = new_sd;
 					fds[nfds].events = POLLIN;
 					nfds++;
@@ -188,87 +185,37 @@ int main (int argc, char *argv[])
 			}
 			else
 			{
-				//printf("  Descriptor %d is readable\n", fds[i].fd);
 				close_conn = FALSE;
 
 				do
 				{
 					rc = recv(fds[i].fd, buffer, sizeof(buffer), 0);
 					if (rc < 0)
-					{
-					//	if (errno != EWOULDBLOCK)
-					//	{
-					//		perror("  recv() failed");
-					//		close_conn = TRUE;
-					//	}
 						break;
-					}
 
-					/* Affichage des requêtes clients */
-					/*
-					printf("\n*******************\n");
-					printf("| Client request: |\n");
-					printf("*******************\n");
-					*/
 					std::string client;
-					// for (size_t i = 0; i < sizeof(buffer); i++)
-					// 	std::cout << buffer[i];
-		
-					
 					client.insert(client.size(), buffer, rc);
-					// pars_request(r_s, client);
-
-					//std::cout << client << std::endl;
-					
-
 					if (rc == 0)
 					{
-						//printf("  Connection closed\n");
 						close_conn = TRUE;
 						break;
 					}
 					else{
 						std::string responseCGI = requestHandler(client, server_list);
 						
-						/*
-						printf("*******************\n");
-						printf("| Server respond: |\n");
-						printf("*******************\n");
-						*/
-						// std::cout << responseCGI << std::endl;
-						//std::cout << page_upload << std::endl;
-						// if (r_s.route == "/favicon.ico")
-						// 	rc = send(fds[i].fd, NULL, 0, 0);
-						// else {
-							rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
-						// }
-						//
-						//      CCCCC    GGGGG    IIIII
-						//      C        G          I
-						//      C        G  GG      I
-						//      C        G   G      I
-						//      C        G   G      I
-						//      CCCCC    GGGGG    IIIII
-						//
-
-						// SEND(FDS[I].FD, STRING_CGI.C_STR(), STRING_CGI.SIZE(), 0);
-
-						//rc = send(fds[i].fd, buffer, content_len, 0);
+						rc = send(fds[i].fd, responseCGI.c_str(), responseCGI.size(), 0);
 						if (rc < 0)
 						{
 							perror("  send() failed");
 							close_conn = TRUE;
 							break;
 						}
-						//str = "\n";
-						//send(fds[i].fd, str, strcontent_len(str), 0);
 					}
 
 				} while(TRUE);
 
 				if (close_conn)
 				{
-					//printf("close_conn\n");
 					close(fds[i].fd);
 					fds[i].fd = -1;
 					compress_array = TRUE;
@@ -281,7 +228,6 @@ int main (int argc, char *argv[])
 		if (compress_array)
 		{
 			compress_array = FALSE;
-			//printf("compress_array\n");
 			for (i = 0; i < nfds; i++)
 			{
 				if (fds[i].fd == -1)
