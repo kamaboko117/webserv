@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 16:50:57 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/03 17:14:55 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/24 13:28:26 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,8 @@ char    *ft_strdupcpp(const char *src){
 
 std::vector<cfg::t_location>::iterator        closestMatchingLocation(cfg::Server &server, std::string path)
 {
+    //add last slash if does not exist
+    path = *path.rbegin() == '/' ? path : path + "/";
     for (std::vector<cfg::t_location>::iterator it = server._locations.begin();
             it != server._locations.end(); ++it)
         if (it->_location == path)
