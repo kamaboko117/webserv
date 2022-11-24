@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/23 17:45:31 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/24 13:27:31 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -339,8 +339,8 @@ std::string autoindex(char const *dir_path)
 std::string getValidIndex(std::vector<std::string> indexes){
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
-		if (existsFile(indexes[i]) && canRead(indexes[i]))
-			return indexes[i];
+		if (existsFile("./" + indexes[i]) && canRead("./" + indexes[i]))
+			return "./" + indexes[i];
 	}
 	return ("");
 }
@@ -412,7 +412,7 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 	//check if method is allowed
 	if (std::find(it->_allow.begin(), it->_allow.end(), req.getMethod()) == it->_allow.end())
 		return (errorPage(405, server));
-
+	
 	std::string extension = "";
 	//set environment for cgi
 	m_env = CGISetEnv(req, server, *it);
