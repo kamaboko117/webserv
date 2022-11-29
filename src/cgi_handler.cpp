@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/29 14:38:37 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/29 15:01:04 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,8 @@ std::map<std::string, std::string> CGISetEnv(Request &req, cfg::Server server, c
 	ret["PATH_INFO"] = req.getPath().substr(0, req.getPath().find('?'));
 	if (ret["PATH_INFO"] == "/")
 		ret["PATH_INFO"] = "";
-	ret["PATH_TRANSLATED"] = "." + ret["PATH_INFO"].replace(0, location._location.size(), location._root); //conf path + path info basically (i think)
+	std::string tmp = ret["PATH_INFO"];
+	ret["PATH_TRANSLATED"] = "." + tmp.replace(0, location._location.size(), location._root); //conf path + path info basically (i think)
 	if (ret["PATH_TRANSLATED"].find_last_of('.') != std::string::npos){
 		extension = ret["PATH_TRANSLATED"].substr(ret["PATH_TRANSLATED"].find_last_of('.'), std::string::npos);
         //remove potential '/' at the end of extension
