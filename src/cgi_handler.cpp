@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/24 13:27:31 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/11/29 14:38:37 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,7 +303,7 @@ std::string deleteHandler(std::map<std::string, std::string> m_env, cfg::Server 
 	return (ret);
 }
 
-std::string autoindex(char const *dir_path)
+std::string autoindex(char const *dir_path, std::string path_info)
 {
 	DIR						*dh;
 	struct dirent        	*contents;
@@ -312,18 +312,20 @@ std::string autoindex(char const *dir_path)
 	std::string				sdir_path(dir_path);
 	if (*(sdir_path.rbegin()) != '/')
 		sdir_path.append("/");
+	if (*(path_info.rbegin()) != '/')
+		path_info.append("/");
 	dh = opendir(dir_path);
 	if (!dh)
 		return std::string("<body>dir_path not found !</body>");
 	autoindex.append("<body><ul>");
-	autoindex.append("<li><a href=\"/" + sdir_path + "\">.</li>");
-	autoindex.append("<li><a href=\"/" + sdir_path + "..\">..</li>");
+	autoindex.append("<li><a href=\"/" + path_info + "\">.</li>");
+	autoindex.append("<li><a href=\"/" + path_info + "..\">..</li>");
 	while ((contents = readdir(dh)) != NULL)
 	{
 		if (std::string(contents->d_name) != "." && std::string(contents->d_name) != "..")
 		{
 			autoindex.append("<li><a href=\"/");
-			autoindex.append(sdir_path.c_str());
+			autoindex.append(path_info);
 			autoindex.append(contents->d_name);
 			autoindex.append("\">");
 			autoindex.append(contents->d_name);
@@ -436,8 +438,11 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 	
 	//check if file is a directory => index or autoindex
 	if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET"){
+		std::string indexroot = ".";
+		if (m_env["PATH_INFO"][0] != '/')
+			indexroot += "/";
 		if (it->_autoindex)
-			return (autoindex(m_env["PATH_TRANSLATED"].c_str()));
+			return (autoindex(m_env["PATH_TRANSLATED"].c_str(), indexroot + m_env["PATH_INFO"]));
 		if (!it->_index.size()){
 			std::cout << "\n*****no index" << std::endl;
 			return (errorPage(404, server));
