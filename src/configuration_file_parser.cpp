@@ -324,7 +324,7 @@ void					getRoot
 	if (pos == end)
 		throw ParseError();
 	if (*(pos->rbegin()) != '/')
-		pos->append('/');
+		pos->append("/");
 	server.back()._locations.back()._root = *pos;
 	++pos;
 }
