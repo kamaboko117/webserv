@@ -97,6 +97,8 @@ int main (int argc, char *argv[])
 			len++;
 			fds[i].fd = server_list[i]._socket;
 			fds[i].events = POLLIN;
+		} else {
+			return (-1);
 		}
 	}
 
