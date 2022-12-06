@@ -6,7 +6,7 @@
 /*   By: asaboure <asaboure@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/05 19:42:19 by asaboure          #+#    #+#             */
-/*   Updated: 2022/11/29 15:01:04 by asaboure         ###   ########.fr       */
+/*   Updated: 2022/12/06 14:24:16 by asaboure         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,8 +226,10 @@ std::string transferFile(std::string type, std::string file, cfg::Server server)
     std::ifstream       f(file.c_str());
     std::stringstream   ss;
 
-    if (!f)
+    if (!f) {
+		std::cout << "could not create ifstream " << file << std::endl;
         return (errorPage(500, server));
+	}
     ss << f.rdbuf();
     ft_itoa_string(ss.str().length(), ret);
     ret += "\r\n\r\n";
@@ -342,8 +344,13 @@ std::string autoindex(char const *dir_path, std::string path_info)
 std::string getValidIndex(std::vector<std::string> indexes){
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
-		if (existsFile("./" + indexes[i]) && canRead("./" + indexes[i]))
-			return "./" + indexes[i];
+		if (indexes[i][0] == '/'){
+			indexes[i] = "." + indexes[i];
+		} else {
+			indexes[i] = "./" + indexes[i];
+		}
+		if (existsFile(indexes[i]))// && canRead("./" + indexes[i]))
+			return indexes[i];
 	}
 	return ("");
 }
@@ -352,8 +359,10 @@ std::string uploadFile(std::map<std::string, std::string> m_env, Request &req, c
 	std::ofstream   outfile(("./" + location._upload_store + "/post.txt").c_str(), std::ios_base::binary);
 	std::string     ret;
    
-	if (!outfile)
+	if (!outfile){
+		std::cout << "could not create uploadfile" << std::endl;
 		return (errorPage(500, server));
+	}
 	outfile << req.getBody();
 	outfile.close();
 	ret = "HTTP/1.1 201\r\n";
@@ -427,15 +436,6 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
     }
 	if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
 		return (cgiHandler(m_env, req, strReq, server));
-
-	//check if file exists
-	if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
-		std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
-		return errorPage(404, server);
-	}
-	//check if file is readable
-	if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
-		return errorPage(403, server);
 	
 	//check if file is a directory => index or autoindex
 	if (isDirectory(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET"){
@@ -460,6 +460,16 @@ std::string requestHandler(std::string strReq, std::vector<cfg::Server>	server_l
 		if ((extension == ".php") && it->_cgi_pass.find(".php") != it->_cgi_pass.end())
 			return (cgiHandler(m_env, req, strReq, server));
 	}
+
+	//check if file exists
+	if (!existsFile(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] != "POST" && m_env["PATH_INFO"] != it->_root){
+		std::cout << "\n*****file " << m_env["PATH_TRANSLATED"] << " does not exist" << std::endl;
+		return errorPage(404, server);
+	}
+	//check if file is readable
+	if (!canRead(m_env["PATH_TRANSLATED"]) && m_env["REQUEST_METHOD"] == "GET" && m_env["PATH_INFO"] != it->_root)
+		return errorPage(403, server);
+
 	//handle posts
 	if (m_env["REQUEST_METHOD"] == "POST"){
 		if (server._client_max_body_size && (std::size_t)ft_stoi(m_env["CONTENT_LENGTH"]) > server._client_max_body_size)
